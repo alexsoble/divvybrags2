@@ -1,0 +1,45 @@
+#divvybrags {
+  width: 240px; 
+  height: 100%; 
+  position: absolute; 
+  right: 0; 
+  top: 0;
+  background-color: #1c9bca;
+  color: white;
+  z-index: 1;
+  } 
+
+#divvybrags h2 {
+  text-align: center;
+  }
+
+#divvybrags p {
+  text-align: center;
+  width: 220px;
+  margin-left: auto;
+  margin-right: auto;
+  }
+
+.divvybrags-option {
+  font-size: 18px;
+  color: white; 
+  cursor: pointer;
+  font-weight: bold;
+  }
+
+.divvybrags-option:hover {
+  text-decoration: underline;
+  } 
+
+#notice-area {
+  text-align: center;
+  }
+
+.notice-area-text {
+  text-align: center;
+  font-size: 16px;
+  font-weight: bold;
+  }
+
+#chart-area {
+  }
