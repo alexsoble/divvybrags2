@@ -3,6 +3,7 @@ $(function() {
 	window.my_divvy_data = [];
 	var total_trips = 0;
   window.calculating = false;
+  window.showing_sidebar = true; 
 
   // Scrape the trips info table
   function scrapeDivvyData() {
@@ -20,14 +21,21 @@ $(function() {
   }
   scrapeDivvyData();
 
+  function roundTenths(number) {
+    return parseInt(number * 10) / 10
+  }
+
   // Create Divvybrags sidebar menu
-  content_html = "<br/><div id='divvybrags'><h2>DivvyBrags</h2><br/><br/>";
+  content_html = "<br/><div id='divvybrags'>";
+  content_html += "<div id='toggle-divvybrags'>X</div><br/><br/>";
+  content_html += "<div id='divvybrags-body'>";
+  content_html += "<h2>DivvyBrags</h2><br/><br/>";
   content_html += "<p id='calculate-my-milage' class='divvybrags-option'>Calculate my Mileage</p>";
   content_html += "<p id='milage-calculating-status'></p>";
   content_html += "<p id='download-csv' class='divvybrags-option'>Download as CSV</p>";
   content_html += "<p id='make-chart' class='divvybrags-option'>Chart My Data</p>";
   content_html += "<p id='chart-making-status'></p>";
-  content_html += "</div>";
+  content_html += "</div></div>";
   $('#content').after(content_html);
   $('table').before("<div id='chart-area'></div>");
   
@@ -36,19 +44,36 @@ $(function() {
 
   // This function describes how to ask the Google distance matrix API for approximate trip distances
   function getMilageFromGoogle(trip, i) {
-    if (trip["start_station"] !== "Theater on the Lake") {
+
+    // There are a few station locations that Google doesn't parse well -- swap those out for more precise addresses
+    if (trip["start_station"] !== "Theater on the Lake" && trip["start_station"] !== "Daley Center Plaza") {
       start = trip["start_station"].replace(/\s/g, "+").replace(/&/,"and") + "+Chicago,+IL,+USA";
-    } else {
+    } else if (trip["start_station"] === "Theater on the Lake") {
       start = "2401+N+Lake+Shore+Dr,+Chicago,+IL,+USA";
+    } else if (trip["start_station"] === "Daley Center Plaza") {
+      start = "50+W+Washington+St,+Chicago,+IL,+USA";
     }
-    end = trip["end_station"].replace(/\s/g, "+").replace(/&/,"and") + "+Chicago,+IL,+USA";
+
+    if (trip["end_station"] !== "Theater on the Lake" && trip["end_station"] !== "Daley Center Plaza") {
+      end = trip["end_station"].replace(/\s/g, "+").replace(/&/,"and") + "+Chicago,+IL,+USA";
+    } else if (trip["end_station"] === "Theater on the Lake") {
+      end = "2401+N+Lake+Shore+Dr,+Chicago,+IL,+USA";
+    } else if (trip["end_station"] === "Daley Center Plaza") {
+      end = "50+W+Washington+St,+Chicago,+IL,+USA";
+    }
+
     google_url = "https://maps.googleapis.com/maps/api/distancematrix/json?origins=" + start + "&destinations=" + end + "&sensor=false&mode=bicycling&units=imperial"
     $.ajax({
       type: "POST",
       url: google_url,
       success: function(data) {
         if (data.status === "OK") {
-          milage = parseFloat(data["rows"][0]["elements"][0]["distance"]["text"].replace(/\s/g, "").replace(/mi/g, ""));
+          response = data["rows"][0]["elements"][0]["distance"]["text"]
+          if (response.indexOf("ft") === -1) {
+            milage = parseFloat(response.replace(/\s/g, "").replace(/mi/g, ""));
+          } else {
+            milage = parseFloat(response.replace(/\s/g, "").replace(/ft/g, "") / 5280);
+          }
           window.my_divvy_data[i]["milage"] = milage;
           total_milage += milage;
           trips_calculated += 1;
@@ -58,6 +83,7 @@ $(function() {
             postResults(total_milage);
           }
         }
+
         // If the Google API says we're over the query limit, keep trying until we're not
         if (data.status === "OVER_QUERY_LIMIT") {
           if (data.error_message !== "You have exceeded your daily request quota for this API.") {
@@ -79,8 +105,7 @@ $(function() {
   };
 
   function postResults(total_milage) {
-    // Round total milage to the tenths place
-    total_milage = parseInt(total_milage * 10) / 10;
+    total_milage = roundTenths(total_milage);
     number_of_trips = window.my_divvy_data.length
     notice_area_html = ("<p class='notice-area-text'>Number of trips: " + number_of_trips + "</p>");
     notice_area_html += ("<p class='notice-area-text'>Approximate distance traveled: " + total_milage + "mi</p>");
@@ -117,10 +142,6 @@ $(function() {
         currentDate = currentDate.addDays(1);
     }
     return dateArray;
-  }
-
-  function roundTenths(number) {
-    return parseInt(number * 10) / 10
   }
 
   function makeChart() {
@@ -233,6 +254,18 @@ $(function() {
 
   $('#make-chart').click(function() {
     makeChart();
+  });
+
+  $('#toggle-divvybrags').click(function() {
+    if (window.showing_sidebar === true) { 
+      $('#divvybrags').animate({ height: "35px", width: "35px" });
+      $(this).html("&#8601;");
+      window.showing_sidebar = false;
+    } else {
+      $('#divvybrags').animate({ height: "100%", width: "240px" });
+      $(this).html("X");
+      window.showing_sidebar = true;
+    }
   });
 
 });
