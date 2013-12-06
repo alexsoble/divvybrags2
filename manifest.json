@@ -18,7 +18,8 @@
     "highcharts.js",
     "background.js",
     "background.css",
-    "ajax-loader.gif"
+    "ajax-loader.gif",
+    "station_distances_withheader.csv"
   ],
 
   "permissions": [

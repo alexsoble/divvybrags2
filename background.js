@@ -37,10 +37,86 @@ $(function() {
   content_html += "<p id='chart-making-status'></p>";
   content_html += "</div></div>";
   $('#content').after(content_html);
-  $('table').before("<div id='chart-area'></div>");
+  $('table').before("<div id='chart-area'></div><div id='chart-area-margin'></div>");
   
-  total_milage = 0; 
-  trips_calculated = 0;
+  window.total_milage = 0; 
+  window.trips_calculated = 0;
+
+  var station_distances_url = chrome.extension.getURL("station_distances_withheader.csv");
+
+  $.ajax({
+      type: "GET",
+      url: station_distances_url,
+      dataType: "text",
+      success: function(data) {processData(data);}
+   });
+
+  function processData(allText) {
+    var allTextLines = allText.split(/\r\n|\n/);
+    var headers = allTextLines[0].split(',');
+    var lines = [];
+
+    for (var i = 1; i < allTextLines.length; i++) {
+        var data = allTextLines[i].split(',');
+        if (data.length == headers.length) {
+            var tarr = {};
+            for (var j = 0; j < headers.length; j++) {
+                tarr[headers[j]] = data[j];
+            }
+            lines.push(tarr);
+        }
+    }
+    window.lines = lines;
+  }
+
+  function getMilageFromCSV(trip, i) {
+    var station1 = trip["start_station"];
+    var station2 = trip["end_station"];
+    if (station1 !== station2) {
+      window.match_found = false;
+      for (k = 0; k < window.lines.length; k++) {
+        var this_pair = window.lines[k];
+        if ((this_pair["station1"] === station1 && this_pair["station2"] === station2) || (this_pair["station1"] === station2 && this_pair["station2"] === station1)) {
+          var milage = parseFloat(this_pair["distance"]);
+          window.my_divvy_data[i]["milage"] = milage;
+          window.total_milage += milage;
+          window.trips_calculated += 1;
+          window.match_found = true;
+          $('#milage-calculating-status').html(String(window.trips_calculated) + " out of " + String(window.my_divvy_data.length) + " trips calculated.");
+          // When there are no more trips to calculate, post the results in the notice area of the Divvybrags sidebar
+          if (trips_calculated === window.my_divvy_data.length) {
+            postResults(window.total_milage);
+          }
+        }
+      }
+      if (window.match_found === false) {
+        window.my_divvy_data[i]["milage"] = 0;
+        window.total_milage += 0;
+        window.trips_calculated += 1;
+        $('#milage-calculating-status').html(String(window.trips_calculated) + " out of " + String(window.my_divvy_data.length) + " trips calculated.");
+        if (trips_calculated === window.my_divvy_data.length) {
+          postResults(window.total_milage);
+        }
+      }
+    } else {
+      window.my_divvy_data[i]["milage"] = 0;
+      window.total_milage += 0;
+      window.trips_calculated += 1;
+      $('#milage-calculating-status').html(String(window.trips_calculated) + " out of " + String(window.my_divvy_data.length) + " trips calculated.");
+      if (trips_calculated === window.my_divvy_data.length) {
+        postResults(window.total_milage);
+      }
+    }
+  }
+
+  function handleNoMilageRow(i) {
+    window.my_divvy_data[i]["milage"] = 0;
+    window.trips_calculated += 1;
+    $('#milage-calculating-status').html(String(window.trips_calculated) + " out of " + String(window.my_divvy_data.length) + " trips calculated.");
+    if (window.trips_calculated === window.my_divvy_data.length) {
+      postResults(window.total_milage);
+    }
+  }
 
   // This function describes how to ask the Google distance matrix API for approximate trip distances
   function getMilageFromGoogle(trip, i) {
@@ -68,7 +144,7 @@ $(function() {
       url: google_url,
       success: function(data) {
         if (data.status === "OK") {
-          response = data["rows"][0]["elements"][0]["distance"]["text"]
+          response = data["rows"][0]["elemens"][0]["distance"]["text"]
           if (response.indexOf("ft") === -1) {
             milage = parseFloat(response.replace(/\s/g, "").replace(/mi/g, ""));
           } else {
@@ -123,7 +199,9 @@ $(function() {
       var loader_img = chrome.extension.getURL("ajax-loader.gif");
       $('#calculate-my-milage').append("<img id='loading-gif' src='" + loader_img + "'>");
       for (var i = 0; i < window.my_divvy_data.length; i++) {
-        response = getMilageFromGoogle(window.my_divvy_data[i], i);
+        response = getMilageFromCSV(window.my_divvy_data[i], i);
+        // Write a function that handles the fallback to  Google
+        // response = getMilageFromGoogle(window.my_divvy_data[i], i);
       }
     }
   };
@@ -165,11 +243,7 @@ $(function() {
     // Generating an array with all the dates between user's first Divvy ride and user's most recent Divvy ride
     first_date = new Date(window.my_divvy_data[0]["start_date"]);
     last_date = new Date(window.my_divvy_data[window.my_divvy_data.length - 1]["start_date"]);
-    console.log(first_date);
-    console.log(last_date);
-
     date_array = getDates(first_date, last_date);
-    console.log(date_array);
 
     // Stuff arrays with data representing daily trip miles and cumulative trip miles...
     for (var j = 0; j < date_array.length; j++) {
@@ -233,10 +307,14 @@ $(function() {
           ],
         credits: false
     });
+    
+    $('#chart-area-margin').html("<br/><br/><br/>");
+
   }
 
   function downloadCSV() {
     var csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += "Trip ID,Start Station,Start Date,End Station,End Date,Duration,Approximate Mileage\n"
     window.my_divvy_data.forEach(function(trip) {
       csvContent += (trip["trip_id"] + "," + trip["start_station"] + "," + trip["start_date"] + "," + trip["end_station"] + "," + trip["end_date"] + "," + trip["duration"] + "," + trip["milage"] +"\n" );
     });

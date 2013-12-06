@@ -17,3 +17,8 @@ Each of the options triggers a javascript function in the background.js file.
 **Download as CSV** builds a little CSV representation of your data and sends it to your Downloads folder. If you've calculated mileage, you get that data too.
 
 **Chart My Data** uses highcharts.js to graph your miles logged per day and cumulative mileage.
+
+Thank you shout-outs
+-------------------------
+
+Tip of the hat to @tothebeat for building a big huge file with Divvy Station distances, @hunterowens for the good advice, Dan Gohlke for smart feature ideas, Drew Huening for pointing the way to a browser extension, and @iandees for writing the very first divvybikes.com scraping tool.
