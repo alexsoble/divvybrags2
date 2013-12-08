@@ -51,6 +51,7 @@ $(function() {
       success: function(data) {processData(data);}
    });
 
+  // Read the big CSV file of distances between Divvy stations and store in window.lines
   function processData(allText) {
     var allTextLines = allText.split(/\r\n|\n/);
     var headers = allTextLines[0].split(',');
@@ -68,6 +69,23 @@ $(function() {
     }
     window.lines = lines;
   }
+
+  function calculateMyMilage() {
+    if (window.calculating === false) {
+      window.calculating = true;
+      var loader_img = chrome.extension.getURL("ajax-loader.gif");              // Create loading gif animation
+      $('#calculate-my-milage').append("<img id='loading-gif' src='" + loader_img + "'>");
+      for (var i = 0; i < window.my_divvy_data.length; i++) {
+        csv_response = getMilageFromCSV(window.my_divvy_data[i], i);            // Check to see if the stations are in the CSV
+        if (csv_response === false) {
+          google_response = getMilageFromGoogle(window.my_divvy_data[i], i);    // If not, ask Google for distances
+          if (google_response === false) {
+            handleNoMilageRow(i)                                                // If Google's clueless, no miles for you
+          }
+        }
+      }
+    }
+  };
 
   function getMilageFromCSV(trip, i) {
     var station1 = trip["start_station"];
@@ -90,22 +108,10 @@ $(function() {
         }
       }
       if (window.match_found === false) {
-        window.my_divvy_data[i]["milage"] = 0;
-        window.total_milage += 0;
-        window.trips_calculated += 1;
-        $('#milage-calculating-status').html(String(window.trips_calculated) + " out of " + String(window.my_divvy_data.length) + " trips calculated.");
-        if (trips_calculated === window.my_divvy_data.length) {
-          postResults(window.total_milage);
-        }
+        return false
       }
     } else {
-      window.my_divvy_data[i]["milage"] = 0;
-      window.total_milage += 0;
-      window.trips_calculated += 1;
-      $('#milage-calculating-status').html(String(window.trips_calculated) + " out of " + String(window.my_divvy_data.length) + " trips calculated.");
-      if (trips_calculated === window.my_divvy_data.length) {
-        postResults(window.total_milage);
-      }
+      handleNoMilageRow(i)
     }
   }
 
@@ -120,7 +126,6 @@ $(function() {
 
   // This function describes how to ask the Google distance matrix API for approximate trip distances
   function getMilageFromGoogle(trip, i) {
-
     // There are a few station locations that Google doesn't parse well -- swap those out for more precise addresses
     if (trip["start_station"] !== "Theater on the Lake" && trip["start_station"] !== "Daley Center Plaza") {
       start = trip["start_station"].replace(/\s/g, "+").replace(/&/,"and") + "+Chicago,+IL,+USA";
@@ -129,7 +134,6 @@ $(function() {
     } else if (trip["start_station"] === "Daley Center Plaza") {
       start = "50+W+Washington+St,+Chicago,+IL,+USA";
     }
-
     if (trip["end_station"] !== "Theater on the Lake" && trip["end_station"] !== "Daley Center Plaza") {
       end = trip["end_station"].replace(/\s/g, "+").replace(/&/,"and") + "+Chicago,+IL,+USA";
     } else if (trip["end_station"] === "Theater on the Lake") {
@@ -144,22 +148,25 @@ $(function() {
       url: google_url,
       success: function(data) {
         if (data.status === "OK") {
-          response = data["rows"][0]["elemens"][0]["distance"]["text"]
+          response = data["rows"][0]["elements"][0]["distance"]["text"]
           if (response.indexOf("ft") === -1) {
             milage = parseFloat(response.replace(/\s/g, "").replace(/mi/g, ""));
           } else {
             milage = parseFloat(response.replace(/\s/g, "").replace(/ft/g, "") / 5280);
           }
-          window.my_divvy_data[i]["milage"] = milage;
-          total_milage += milage;
-          trips_calculated += 1;
-          $('#milage-calculating-status').html(String(trips_calculated) + " out of " + String(window.my_divvy_data.length) + " trips calculated.");
-          // When there are no more trips to calculate, post the results in the notice area of the Divvybrags sidebar
-          if (trips_calculated === window.my_divvy_data.length) {
-            postResults(total_milage);
+          if (milage < 20) {                            // Sanity check in case Google wildly mis-reads the location of a Divvy station based on its name.
+            window.my_divvy_data[i]["milage"] = milage;
+            total_milage += milage;
+            trips_calculated += 1;
+            $('#milage-calculating-status').html(String(trips_calculated) + " out of " + String(window.my_divvy_data.length) + " trips calculated.");
+            // When there are no more trips to calculate, post the results in the notice area of the Divvybrags sidebar
+            if (trips_calculated === window.my_divvy_data.length) {
+              postResults(total_milage);
+            }
+          } else {
+            return false 
           }
         }
-
         // If the Google API says we're over the query limit, keep trying until we're not
         if (data.status === "OVER_QUERY_LIMIT") {
           if (data.error_message !== "You have exceeded your daily request quota for this API.") {
@@ -167,14 +174,12 @@ $(function() {
           } else {
             $('#milage-calculating-status').html("Google Distance Matrix daily limit reached, try again tomorrow. :(");
             $('#loading-gif').remove()
-            return
+            return false 
           }
         }
-        if (data.status === "MAX_ELEMENTS_EXCEEDED") {
+        if (data.status === "REQUEST_DENIED" || data.status === "MAX_ELEMENTS_EXCEEDED") {
           console.log("uh oh...");
-        }
-        if (data.status === "REQUEST_DENIED") {
-          console.log("uh oh...");
+          return false 
         }
       }
     });
@@ -190,21 +195,6 @@ $(function() {
     $('#calculate-my-milage').after(notice_area_html);
     $('#loading-gif').remove()
   }
-
-  // Loops through sraped trips and sends to milage calculator
-  function calculateMyMilage() {
-    if (window.calculating === false) {
-      window.calculating = true;
-      // Create loading gif animation
-      var loader_img = chrome.extension.getURL("ajax-loader.gif");
-      $('#calculate-my-milage').append("<img id='loading-gif' src='" + loader_img + "'>");
-      for (var i = 0; i < window.my_divvy_data.length; i++) {
-        response = getMilageFromCSV(window.my_divvy_data[i], i);
-        // Write a function that handles the fallback to  Google
-        // response = getMilageFromGoogle(window.my_divvy_data[i], i);
-      }
-    }
-  };
 
   Date.prototype.addDays = function(days) {
     var dat = new Date(this.valueOf())

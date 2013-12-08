@@ -5,6 +5,10 @@
   "description": "Liberate your bikeshare data.",
   "version": "1.0",
 
+  "icons": { 
+    "48": "icon48.png"
+  },
+
   "content_scripts": [
     {
       "matches": ["https://divvybikes.com/account/trips"],
