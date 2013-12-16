@@ -42,16 +42,19 @@ $(function() {
   window.total_milage = 0; 
   window.trips_calculated = 0;
 
-  var station_distances_url = chrome.extension.getURL("station_distances_withheader.csv");
+  var station_distances_url = chrome.extension.getURL("station_distances_by_bicycle.csv");
 
+  // Pull in the big CSV of Divvy distances. Thanks Nick Bennett for building this! :)
   $.ajax({
       type: "GET",
       url: station_distances_url,
       dataType: "text",
-      success: function(data) {processData(data);}
+      success: function(data) {
+        processData(data);
+      }
    });
 
-  // Read the big CSV file of distances between Divvy stations and store in window.lines
+  // Read the big CSV file of distances and store in window.lines
   function processData(allText) {
     var allTextLines = allText.split(/\r\n|\n/);
     var headers = allTextLines[0].split(',');
@@ -70,6 +73,7 @@ $(function() {
     window.lines = lines;
   }
 
+  // This is what happens when the user wants to find out her/his total Divvy milage
   function calculateMyMilage() {
     if (window.calculating === false) {
       window.calculating = true;
@@ -95,7 +99,7 @@ $(function() {
       for (k = 0; k < window.lines.length; k++) {
         var this_pair = window.lines[k];
         if ((this_pair["station1"] === station1 && this_pair["station2"] === station2) || (this_pair["station1"] === station2 && this_pair["station2"] === station1)) {
-          var milage = parseFloat(this_pair["distance"]);
+          var milage = parseFloat(this_pair["distance"] * 0.000621371);   // Distances in the CSV are stored as meters, so  convert them to miles here
           window.my_divvy_data[i]["milage"] = milage;
           window.total_milage += milage;
           window.trips_calculated += 1;
@@ -108,10 +112,10 @@ $(function() {
         }
       }
       if (window.match_found === false) {
-        return false
+        return false          // Pass to Google Distance API since these station names aren't in the CSV file
       }
     } else {
-      handleNoMilageRow(i)
+      handleNoMilageRow(i)    // No milage for this trip if the start station is the same as the end station 
     }
   }
 
@@ -124,8 +128,9 @@ $(function() {
     }
   }
 
-  // This function describes how to ask the Google distance matrix API for approximate trip distances
+  // This function describes how to ask the Google Distance API for approximate trip distances
   function getMilageFromGoogle(trip, i) {
+
     // There are a few station locations that Google doesn't parse well -- swap those out for more precise addresses
     if (trip["start_station"] !== "Theater on the Lake" && trip["start_station"] !== "Daley Center Plaza") {
       start = trip["start_station"].replace(/\s/g, "+").replace(/&/,"and") + "+Chicago,+IL,+USA";
@@ -185,6 +190,7 @@ $(function() {
     });
   };
 
+  // Display milage results in the sidebar
   function postResults(total_milage) {
     total_milage = roundTenths(total_milage);
     number_of_trips = window.my_divvy_data.length
@@ -324,6 +330,7 @@ $(function() {
     makeChart();
   });
 
+  // Show/hide the sidebar
   $('#toggle-divvybrags').click(function() {
     if (window.showing_sidebar === true) { 
       $('#divvybrags').animate({ height: "35px", width: "35px" });

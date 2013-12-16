@@ -23,7 +23,7 @@
     "background.js",
     "background.css",
     "ajax-loader.gif",
-    "station_distances_withheader.csv"
+    "station_distances_by_bicycle.csv"
   ],
 
   "permissions": [
