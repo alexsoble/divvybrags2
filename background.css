@@ -34,10 +34,13 @@
   color: white; 
   cursor: pointer;
   font-weight: bold;
+  text-decoration: underline;
+  padding: 10px;
   }
 
 .divvybrags-option:hover {
   text-decoration: underline;
+  color: #136787;
   } 
 
 #notice-area {

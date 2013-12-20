@@ -295,8 +295,15 @@ $(function() {
             title: { text: 'Total Miles Divvied', style: { color: '#FF7518' } }, 
             labels: { style: { color: '#FF7518' } },
             opposite: true,
-            min: 0
+            min: 0,
           }],
+          plotOptions: {
+            spline: {
+              marker: {
+                enabled: false
+              }
+            }
+          },
         series: [
           { type: 'column', name: 'Miles This Day', data: daily_milage_array, color: '#3DB7E4'},
           { type: 'spline', name: 'Total Miles', data: cumulative_milage_array, color: '#FF7518', yAxis: 1 }
