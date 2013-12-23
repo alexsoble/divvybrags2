@@ -24,6 +24,8 @@
     "background.css",
     "ajax-loader.gif",
     "station_distances_by_bicycle.csv"
-  ]
+  ],
+
+  "permissions": [ "http://divvybrags-leaderboard.herokuapp.com/" ]
 
 }

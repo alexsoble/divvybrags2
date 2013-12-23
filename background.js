@@ -35,10 +35,15 @@ $(function() {
   content_html += "<p id='download-csv' class='divvybrags-option'>Download as CSV</p>";
   content_html += "<p id='make-chart' class='divvybrags-option'>Chart My Data</p>";
   content_html += "<p id='chart-making-status'></p>";
+  content_html += "<p id='brag-toggle' class='divvybrags-option'>Brag</p>";
+  content_html += "<p id='brag-area'></p>";
+  content_html += "<p id='leaderboard-toggle' class='divvybrags-option'>Leaderboard</p>";
+  content_html += "<p id='leaderboard'></p>";
   content_html += "</div></div>";
-  $('#content').after(content_html);
+  $('#content').after(content_html);  
+
   $('table').before("<div id='chart-area'></div><div id='chart-area-margin'></div>");
-  
+
   window.total_milage = 0; 
   window.trips_calculated = 0;
 
@@ -51,6 +56,22 @@ $(function() {
       dataType: "text",
       success: function(data) {
         processData(data);
+        // Retrieve the leaderboard 
+        $.ajax({
+          type: "GET",
+          url: "http://divvybrags-leaderboard.herokuapp.com/entries.json", 
+          success: function(data) {
+            console.log(data);
+            for (var i = 0; i < data.length; i++) {
+              var leaderboard_entry = data[i];
+              var leaderboard_position = Object.keys(leaderboard_entry)[0];
+              var name = leaderboard_entry[leaderboard_position]["name"];
+              var miles = leaderboard_entry[leaderboard_position]["miles"];
+              var entry_html = leaderboard_position + ". " + name + ": " + miles + "mi<br/>";
+              $('#leaderboard').append(entry_html);
+            }
+          }
+        });
       }
    });
 
@@ -71,6 +92,7 @@ $(function() {
         }
     }
     window.lines = lines;
+    console.log(window.lines);
   }
 
   // This is what happens when the user wants to find out her/his total Divvy milage
@@ -195,7 +217,7 @@ $(function() {
     total_milage = roundTenths(total_milage);
     number_of_trips = window.my_divvy_data.length
     notice_area_html = ("<p class='notice-area-text'>Number of trips: " + number_of_trips + "</p>");
-    notice_area_html += ("<p class='notice-area-text'>Approximate distance traveled: " + total_milage + "mi</p>");
+    notice_area_html += ("<p class='notice-area-text'>Approximate distance traveled: <span id='total-milage'>" + total_milage + "</span>mi</p>");
     $('#calculate-my-milage').html("My stats");
     $('#calculate-my-milage').attr("style","text-decoration: underline;");
     $('#calculate-my-milage').after(notice_area_html);
@@ -335,6 +357,15 @@ $(function() {
 
   $('#make-chart').click(function() {
     makeChart();
+  });
+
+  $('#post-to-leaderboard').click(function() {
+    var total_milage = parseInt($('total-milage').html());
+    $.ajax({
+      type: "POST",
+      url: "http://divvybrags-leaderboard.herokuapp.com/new_entry", 
+      success: function() { alert("success!"); }
+    });
   });
 
   // Show/hide the sidebar
