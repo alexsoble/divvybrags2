@@ -242,7 +242,7 @@ $(function() {
     $('#calculate-my-milage').after(notice_area_html);
     if (window.small_trips > 0) {
       var milage_note_html = "* There are " + window.my_divvy_data.length + " rows in your data table, but ";
-      milage_note_html += window.small_trips + " of these are trips under 60 seconds.";
+      milage_note_html += window.small_trips + " of these are micro-trips under 60 seconds.";
       $('#milage-note').html(milage_note_html);
     }
     $('#loading-gif').remove();
@@ -415,7 +415,7 @@ $(function() {
       var twitter_img = chrome.extension.getURL("twitter_logo_white.png");
       var star_img = chrome.extension.getURL("star_icon_white.png");
       var tweet_it_html = "<a class='bragging-type-option' target='_blank' href='";
-      tweet_it_html += "https://twitter.com/share?text=" + window.number_of_trips + "%20trips.%20" + window.total_hours + "%20hours,%20" + window.remainder_minutes + "%20minutes,%20 " + window.remainder_seconds + "%20seconds.%20" + window.total_milage + "%20miles.&url=http://divvybrags.com&hashtags=DivvyBrags,bikeCHI,DivvyOn";
+      tweet_it_html += "https://twitter.com/share?text=My bikeshare stats:" + window.number_of_trips + "%20trips.%20" + window.total_hours + "%20hours,%20" + window.remainder_minutes + "%20minutes,%20" + window.remainder_seconds + "%20seconds.%20" + window.total_milage + "%20miles.%20via&url=http://divvybrags.com&hashtags=DivvyBrags,bikeCHI,DivvyOn";
       tweet_it_html += "'><img src='" + twitter_img + "' width='48px' height='48px'/><br/>";
       tweet_it_html += "Tweet It</a>";
       var brag_html = "<a id='post-to-leaderboard' class='bragging-type-option'>";
@@ -452,6 +452,7 @@ $(function() {
           $('#leaderboard').html("");
           var my_entry = data["my_entry"];
           var my_rank = Object.keys(my_entry)[0];
+          var my_name = my_entry[my_rank]["name"];
           var leaderboard = data["leaderboard"];
           var leaderboard_size = leaderboard.length;
           $('#brag-area').html("<span style='font-size: 16px;'>Your rank = #" + my_rank + "</span>");
@@ -460,7 +461,12 @@ $(function() {
             var leaderboard_rank = Object.keys(leaderboard_entry)[0];
             var name = leaderboard_entry[leaderboard_rank]["name"];
             var miles = leaderboard_entry[leaderboard_rank]["miles"];
-            var entry_html = leaderboard_rank + ". " + name + ": " + miles + "mi<br/>";
+            if (name !== my_name) {
+              var entry_html = leaderboard_rank + ". " + name + ": " + miles + "mi<br/>";
+            } else {
+              // Your own leaderboard entry extra-big
+              var entry_html = "<span class='my-leaderboard-entry'>" + leaderboard_rank + ". " + name + ": " + miles + "mi</span><br/>";
+            }
             $('#leaderboard').append(entry_html);
           }
           window.posted_to_leaderboard = true; 
