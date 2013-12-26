@@ -43,6 +43,19 @@
   color: #136787;
   } 
 
+.bragging-type-option {
+  font-size: 16px;
+  color: white; 
+  cursor: pointer;
+  font-weight: bold;
+  text-decoration: underline;
+  }
+
+.bragging-type-option:hover {
+  text-decoration: underline;
+  color: #136787;
+  } 
+
 #notice-area {
   text-align: center;
   }
@@ -52,3 +65,4 @@
   font-size: 16px;
   font-weight: bold;
   }
+  

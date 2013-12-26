@@ -4,6 +4,9 @@ $(function() {
 	var total_trips = 0;
   window.calculating = false;
   window.showing_sidebar = true; 
+  window.posted_to_leaderboard = false; 
+  window.time_in_seconds = 0;
+  window.small_trips = 0;
 
   // Scrape the trips info table
   function scrapeDivvyData() {
@@ -30,13 +33,14 @@ $(function() {
   content_html += "<div id='toggle-divvybrags'>X</div><br/><br/>";
   content_html += "<div id='divvybrags-body'>";
   content_html += "<h2>DivvyBrags</h2><br/><br/>";
-  content_html += "<p id='calculate-my-milage' class='divvybrags-option'>Calculate my Mileage</p>";
-  content_html += "<p id='milage-calculating-status'></p>";
-  content_html += "<p id='download-csv' class='divvybrags-option'>Download as CSV</p>";
-  content_html += "<p id='make-chart' class='divvybrags-option'>Chart My Data</p>";
-  content_html += "<p id='chart-making-status'></p>";
+  var loader_img = chrome.extension.getURL("ajax-loader.gif");    // Loading gif animation
+  content_html += "<p id='calculate-my-milage' class='divvybrags-option'><img id='loading-gif' src='" + loader_img + "'>&nbsp;Calculating Mileage</p>";
+  content_html += "<p id='milage-note'></p>";
   content_html += "<p id='brag-toggle' class='divvybrags-option'>Brag</p>";
   content_html += "<p id='brag-area'></p>";
+  content_html += "<p id='make-chart' class='divvybrags-option'>Chart My Data</p>";
+  content_html += "<p id='download-csv' class='divvybrags-option'>Download as CSV</p>";
+  content_html += "<p id='chart-making-status'></p>";
   content_html += "<p id='leaderboard-toggle' class='divvybrags-option'>Leaderboard</p>";
   content_html += "<p id='leaderboard'></p>";
   content_html += "</div></div>";
@@ -56,13 +60,13 @@ $(function() {
       dataType: "text",
       success: function(data) {
         processData(data);
-        // Retrieve the leaderboard 
+        // Next we'll go retrieve the leaderboard 
         $.ajax({
           type: "GET",
           url: "http://divvybrags-leaderboard.herokuapp.com/entries.json", 
           success: function(data) {
-            console.log(data);
-            for (var i = 0; i < data.length; i++) {
+            // console.log(data);
+            for (var i = 0; i <= data.length - 1; i++) {
               var leaderboard_entry = data[i];
               var leaderboard_position = Object.keys(leaderboard_entry)[0];
               var name = leaderboard_entry[leaderboard_position]["name"];
@@ -75,35 +79,16 @@ $(function() {
       }
    });
 
-  // Read the big CSV file of distances and store in window.lines
-  function processData(allText) {
-    var allTextLines = allText.split(/\r\n|\n/);
-    var headers = allTextLines[0].split(',');
-    var lines = [];
-
-    for (var i = 1; i < allTextLines.length; i++) {
-        var data = allTextLines[i].split(',');
-        if (data.length == headers.length) {
-            var tarr = {};
-            for (var j = 0; j < headers.length; j++) {
-                tarr[headers[j]] = data[j];
-            }
-            lines.push(tarr);
-        }
-    }
-    window.lines = lines;
-    console.log(window.lines);
-  }
-
-  // This is what happens when the user wants to find out her/his total Divvy milage
+  // This runs automatically once data is loaded 
   function calculateMyMilage() {
     if (window.calculating === false) {
       window.calculating = true;
       var loader_img = chrome.extension.getURL("ajax-loader.gif");              // Create loading gif animation
       $('#calculate-my-milage').append("<img id='loading-gif' src='" + loader_img + "'>");
       for (var i = 0; i < window.my_divvy_data.length; i++) {
-        csv_response = getMilageFromCSV(window.my_divvy_data[i], i);            // Check to see if the stations are in the CSV
+        var csv_response = getMilageFromCSV(window.my_divvy_data[i], i);            // Check to see if the stations are in the CSV
         if (csv_response === false) {
+          // console.log("getMilageFromCSV returned false!");
           google_response = getMilageFromGoogle(window.my_divvy_data[i], i);    // If not, ask Google for distances
           if (google_response === false) {
             handleNoMilageRow(i)                                                // If Google's clueless, no miles for you
@@ -114,19 +99,43 @@ $(function() {
   };
 
   function getMilageFromCSV(trip, i) {
-    var station1 = trip["start_station"];
-    var station2 = trip["end_station"];
-    if (station1 !== station2) {
+    var start_station = trip["start_station"];
+    var end_station = trip["end_station"];
+
+    // Extracting + parsing info about trip durations
+    var duration = trip["duration"].split(" ");
+    for (var j = 0; j < duration.length; j++) {
+      var this_trip_seconds = 0;
+      if (duration[j].indexOf("s") !== -1) {
+        var seconds = parseInt($.trim(duration[j]).substring(0, $.trim(duration[j]).length - 1));
+        this_trip_seconds += seconds
+        window.time_in_seconds += seconds
+      }
+      if (duration[j].indexOf("m") !== -1) {
+        var minutes = parseInt($.trim(duration[j]).substring(0, $.trim(duration[j]).length - 1)) * 60;
+        this_trip_seconds += minutes
+        window.time_in_seconds += minutes
+      }
+      if (duration[j].indexOf("h") !== -1) {
+        var hours = parseInt($.trim(duration[j]).substring(0, $.trim(duration[j]).length - 1)) * 3600;
+        this_trip_seconds += hours
+        window.time_in_seconds += hours
+      }
+    }
+
+    // Extracting + parsing info about distance
+    if (start_station !== end_station) {
       window.match_found = false;
       for (k = 0; k < window.lines.length; k++) {
         var this_pair = window.lines[k];
-        if ((this_pair["station1"] === station1 && this_pair["station2"] === station2) || (this_pair["station1"] === station2 && this_pair["station2"] === station1)) {
-          var milage = parseFloat(this_pair["distance"] * 0.000621371);   // Distances in the CSV are stored as meters, so  convert them to miles here
+        if (this_pair["start_station"] === start_station && this_pair["end_station"] === end_station) {
+          // console.log("Found a match in the CSV file!");
+          var milage = parseFloat(this_pair["distance"] * 0.000621371);   // Distances in the CSV are stored as meters, so convert them to miles here
           window.my_divvy_data[i]["milage"] = milage;
           window.total_milage += milage;
           window.trips_calculated += 1;
           window.match_found = true;
-          $('#milage-calculating-status').html(String(window.trips_calculated) + " out of " + String(window.my_divvy_data.length) + " trips calculated.");
+          $('#milage-note').html(String(window.trips_calculated) + " out of " + String(window.my_divvy_data.length) + " trips calculated.");
           // When there are no more trips to calculate, post the results in the notice area of the Divvybrags sidebar
           if (trips_calculated === window.my_divvy_data.length) {
             postResults(window.total_milage);
@@ -137,6 +146,9 @@ $(function() {
         return false          // Pass to Google Distance API since these station names aren't in the CSV file
       }
     } else {
+      if (this_trip_seconds < 60) {
+        window.small_trips += 1       // If the trip is under one minute and the start/end stations are the same, it's a "small trip"
+      }
       handleNoMilageRow(i)    // No milage for this trip if the start station is the same as the end station 
     }
   }
@@ -144,7 +156,7 @@ $(function() {
   function handleNoMilageRow(i) {
     window.my_divvy_data[i]["milage"] = 0;
     window.trips_calculated += 1;
-    $('#milage-calculating-status').html(String(window.trips_calculated) + " out of " + String(window.my_divvy_data.length) + " trips calculated.");
+    $('#milage-note').html(String(window.trips_calculated) + " out of " + String(window.my_divvy_data.length) + " trips calculated.");
     if (window.trips_calculated === window.my_divvy_data.length) {
       postResults(window.total_milage);
     }
@@ -185,7 +197,7 @@ $(function() {
             window.my_divvy_data[i]["milage"] = milage;
             total_milage += milage;
             trips_calculated += 1;
-            $('#milage-calculating-status').html(String(trips_calculated) + " out of " + String(window.my_divvy_data.length) + " trips calculated.");
+            $('#milage-note').html(String(trips_calculated) + " out of " + String(window.my_divvy_data.length) + " trips calculated.");
             // When there are no more trips to calculate, post the results in the notice area of the Divvybrags sidebar
             if (trips_calculated === window.my_divvy_data.length) {
               postResults(total_milage);
@@ -199,7 +211,7 @@ $(function() {
           if (data.error_message !== "You have exceeded your daily request quota for this API.") {
             getMilageFromGoogle(trip, i);
           } else {
-            $('#milage-calculating-status').html("Google Distance Matrix daily limit reached, try again tomorrow. :(");
+            $('#milage-note').html("Google Distance Matrix daily limit reached, try again tomorrow. :(");
             $('#loading-gif').remove()
             return false 
           }
@@ -214,14 +226,49 @@ $(function() {
 
   // Display milage results in the sidebar
   function postResults(total_milage) {
-    total_milage = roundTenths(total_milage);
-    number_of_trips = window.my_divvy_data.length
-    notice_area_html = ("<p class='notice-area-text'>Number of trips: " + number_of_trips + "</p>");
-    notice_area_html += ("<p class='notice-area-text'>Approximate distance traveled: <span id='total-milage'>" + total_milage + "</span>mi</p>");
+    window.total_milage = roundTenths(total_milage);
+    window.number_of_trips = window.my_divvy_data.length - window.small_trips;
+    window.total_hours = Math.floor(window.time_in_seconds/3600);
+    window.remainder_minutes = Math.floor((window.time_in_seconds % 3600)/60);
+    window.remainder_seconds = (window.time_in_seconds % 3600) % 60;
+    notice_area_html = "<p class='notice-area-text'>Number of trips: " + window.number_of_trips;
+    if (window.small_trips > 0) {
+      notice_area_html += "*"
+    }
+    notice_area_html += "</p><p class='notice-area-text'>Time Divvying: " + window.total_hours + "h, " + window.remainder_minutes + "m, " + window.remainder_seconds + "s</p>";
+    notice_area_html += "<p class='notice-area-text'>Approximate distance traveled: <span id='total-milage'>" + window.total_milage + "</span>mi</p>";
     $('#calculate-my-milage').html("My stats");
     $('#calculate-my-milage').attr("style","text-decoration: underline;");
     $('#calculate-my-milage').after(notice_area_html);
-    $('#loading-gif').remove()
+    if (window.small_trips > 0) {
+      var milage_note_html = "* There are " + window.my_divvy_data.length + " rows in your data table, but ";
+      milage_note_html += window.small_trips + " of these are trips under 60 seconds.";
+      $('#milage-note').html(milage_note_html);
+    }
+    $('#loading-gif').remove();
+    window.milage_calculated = true;
+    makeChart();        // Create the chart when we post results!
+  }
+
+  // Read the big CSV file of distances and store in window.lines
+  function processData(allText) {
+    var allTextLines = allText.split(/\r\n|\n/);
+    var headers = allTextLines[0].split(',');
+    var lines = [];
+
+    for (var i = 1; i < allTextLines.length; i++) {
+        var data = allTextLines[i].split(',');
+        if (data.length == headers.length) {
+            var tarr = {};
+            for (var j = 0; j < headers.length; j++) {
+                tarr[headers[j]] = data[j];
+            }
+            lines.push(tarr);
+        }
+    }
+    window.lines = lines;
+    console.log(window.lines);
+    calculateMyMilage();
   }
 
   Date.prototype.addDays = function(days) {
@@ -359,12 +406,66 @@ $(function() {
     makeChart();
   });
 
-  $('#post-to-leaderboard').click(function() {
-    var total_milage = parseInt($('total-milage').html());
-    $.ajax({
-      type: "POST",
-      url: "http://divvybrags-leaderboard.herokuapp.com/new_entry", 
-      success: function() { alert("success!"); }
+  $('#brag-toggle').click(function() {
+    // Let's check if we have a milage value calculated before we let the user go bragging about it
+    if (window.milage_calculated !== true) {
+      $('#brag-area').html("Please calculate your milage first. <br/> Then we can brag about it!");
+      return
+    } else {
+      var twitter_img = chrome.extension.getURL("twitter_logo_white.png");
+      var star_img = chrome.extension.getURL("star_icon_white.png");
+      var tweet_it_html = "<a class='bragging-type-option' target='_blank' href='";
+      tweet_it_html += "https://twitter.com/share?text=" + window.number_of_trips + "%20trips.%20" + window.total_hours + "%20hours,%20" + window.remainder_minutes + "%20minutes,%20 " + window.remainder_seconds + "%20seconds.%20" + window.total_milage + "%20miles.&url=http://divvybrags.com&hashtags=DivvyBrags,bikeCHI,DivvyOn";
+      tweet_it_html += "'><img src='" + twitter_img + "' width='48px' height='48px'/><br/>";
+      tweet_it_html += "Tweet It</a>";
+      var brag_html = "<a id='post-to-leaderboard' class='bragging-type-option'>";
+      brag_html += "<img src='" + star_img + "' width='48px' height='48px'/><br/>";
+      brag_html += "<span id='post-to-leaderboard-title'>Post To Leaderboard</span></a><span id='username-area'></span><br/><br/><br/>";
+      brag_html += tweet_it_html 
+      if (window.posted_to_leaderboard === false) {
+        $('#brag-area').html(brag_html);
+      } else {
+        $('#brag-area').html(tweet_it_html);
+      }
+    }
+  });
+
+  $('#post-to-leaderboard').livequery(function() {
+    $(this).click(function() {
+      var total_milage = window.total_milage;
+      enter_leaderboard_name_html = "Enter your name as you'd like it to appear on the Leaderboard: <br/><input id='username-input' type='text' style='width: 140px'/>";
+      enter_leaderboard_name_html += "<br/><a id='post-it' class='divvybrags-option'><i>Post to Leaderboard</i></a>";
+      $('#username-area').html(enter_leaderboard_name_html);
+      $('#post-to-leaderboard').html("");
+    });
+  });
+
+  $('#post-it').livequery(function() {
+    $(this).click(function() {
+      var total_milage = window.total_milage;
+      var user_name = $('#username-input').val();
+      $.ajax({
+        type: "POST",
+        url: "http://divvybrags-leaderboard.herokuapp.com/new_entry", 
+        data: { name: user_name, miles: total_milage },
+        success: function(data) { 
+          $('#leaderboard').html("");
+          var my_entry = data["my_entry"];
+          var my_rank = Object.keys(my_entry)[0];
+          var leaderboard = data["leaderboard"];
+          var leaderboard_size = leaderboard.length;
+          $('#brag-area').html("<span style='font-size: 16px;'>Your rank = #" + my_rank + "</span>");
+          for (var i = 0; i <= leaderboard_size - 1; i++) {
+            var leaderboard_entry = leaderboard[i];
+            var leaderboard_rank = Object.keys(leaderboard_entry)[0];
+            var name = leaderboard_entry[leaderboard_rank]["name"];
+            var miles = leaderboard_entry[leaderboard_rank]["miles"];
+            var entry_html = leaderboard_rank + ". " + name + ": " + miles + "mi<br/>";
+            $('#leaderboard').append(entry_html);
+          }
+          window.posted_to_leaderboard = true; 
+        }
+      });
     });
   });
 
