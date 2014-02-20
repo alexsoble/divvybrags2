@@ -42,7 +42,7 @@ $(function() {
   content_html += "<p id='make-chart' class='divvybrags-option'>Chart My Data</p>";
   content_html += "<p id='download-csv' class='divvybrags-option'>Download as CSV</p>";
   content_html += "<p id='chart-making-status'></p>";
-  content_html += "<p id='leaderboard-toggle' class='divvybrags-option'>Leaderboard</p>";
+  content_html += "<p id='leaderboard-toggle' class='divvybrags-option'>The Leaderboard</p>";
   content_html += "<p id='leaderboard'></p>";
   content_html += "</div></div>";
   $('#content').after(content_html);  
@@ -311,8 +311,8 @@ $(function() {
     }
 
     // Generating an array with all the dates between user's first Divvy ride and user's most recent Divvy ride
-    first_date = new Date(window.my_divvy_data[0]["start_date"]);
-    last_date = new Date(window.my_divvy_data[window.my_divvy_data.length - 1]["start_date"]);
+    first_date = new Date(window.my_divvy_data[window.my_divvy_data.length - 1]["start_date"]);
+    last_date = new Date(window.my_divvy_data[0]["start_date"]);
     date_array = getDates(first_date, last_date);
 
     // Stuff arrays with data representing daily trip miles and cumulative trip miles...

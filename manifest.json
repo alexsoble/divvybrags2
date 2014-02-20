@@ -3,7 +3,7 @@
 
   "name": "DivvyBrags",
   "description": "Liberate your bikeshare data.",
-  "version": "2.2.2",
+  "version": "2.2.3",
 
   "icons": { 
     "48": "icon48.png"
@@ -15,7 +15,7 @@
       "js": [ 
         "jquery.js", 
         "highcharts.js", 
-        "jquery.livequery.js", 
+        "jquery.livequery.js",
         "background.js"
       ],
       "css": ["background.css"]
