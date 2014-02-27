@@ -21,7 +21,8 @@ $(function() {
       var trip_data = { "trip_id" : trip_id, "start_station" : start_station, "start_date" : start_date, "end_station" : end_station, "end_date" : end_date, "duration" : duration };
       window.my_divvy_data.push(trip_data);
     });
-    window.extra_unique_id = parseInt(window.my_divvy_data[0]["trip_id"].substr(3,5) + window.my_divvy_data[1]["trip_id"].substr(3,5) + window.my_divvy_data[2]["trip_id"].substr(3,5));
+
+    window.extra_unique_id = parseInt(window.my_divvy_data[window.my_divvy_data.length-1]["trip_id"].substr(3,5) + window.my_divvy_data[window.my_divvy_data.length-2]["trip_id"].substr(3,5) + window.my_divvy_data[window.my_divvy_data.length-3]["trip_id"].substr(3,5));
   }
   scrapeDivvyData();
 
