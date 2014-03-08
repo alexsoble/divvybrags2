@@ -21,7 +21,8 @@ $(function() {
       var trip_data = { "trip_id" : trip_id, "start_station" : start_station, "start_date" : start_date, "end_station" : end_station, "end_date" : end_date, "duration" : duration };
       window.my_divvy_data.push(trip_data);
     });
-    window.extra_unique_id = parseInt(window.my_divvy_data[0]["trip_id"].substr(3,5) + window.my_divvy_data[1]["trip_id"].substr(3,5) + window.my_divvy_data[2]["trip_id"].substr(3,5));
+
+    window.extra_unique_id = parseInt(window.my_divvy_data[window.my_divvy_data.length-1]["trip_id"].substr(3,5) + window.my_divvy_data[window.my_divvy_data.length-2]["trip_id"].substr(3,5) + window.my_divvy_data[window.my_divvy_data.length-3]["trip_id"].substr(3,5));
   }
   scrapeDivvyData();
 
@@ -65,7 +66,7 @@ $(function() {
         // Next we'll go retrieve the leaderboard 
         $.ajax({
           type: "GET",
-          url: "http://divvybrags-leaderboard.herokuapp.com/entries.json", 
+          url: "http://divvybrags-leaderboard.herokuapp.com/entries.json?city=Chicago", 
           success: function(data) {
             for (var i = 0; i <= data.length - 1; i++) {
               var leaderboard_entry = data[i];
@@ -73,7 +74,6 @@ $(function() {
               var name = leaderboard_entry[leaderboard_position]["name"];
               var miles = leaderboard_entry[leaderboard_position]["miles"];
               if (leaderboard_entry[leaderboard_position]["extra_unique_id"] === window.extra_unique_id) {
-                console.log("MATCH!");
                 window.username = name;
               }
               var entry_html = leaderboard_position + ". " + name + ": " + miles + "mi<br/>";
@@ -93,7 +93,6 @@ $(function() {
       for (var i = 0; i < window.my_divvy_data.length; i++) {
         var csv_response = getMilageFromCSV(window.my_divvy_data[i], i);            // Check to see if the stations are in the CSV
         if (csv_response === false) {
-          // console.log("getMilageFromCSV returned false!");
           google_response = getMilageFromGoogle(window.my_divvy_data[i], i);    // If not, ask Google for distances
           if (google_response === false) {
             handleNoMilageRow(i)                                                // If Google's clueless, no miles for you
@@ -222,7 +221,6 @@ $(function() {
           }
         }
         if (data.status === "REQUEST_DENIED" || data.status === "MAX_ELEMENTS_EXCEEDED") {
-          console.log("uh oh...");
           return false 
         }
       }
@@ -272,7 +270,6 @@ $(function() {
         }
     }
     window.lines = lines;
-    console.log(window.lines);
     calculateMyMilage();
   }
 
@@ -351,7 +348,7 @@ $(function() {
     }
 
     var formatted_dates = date_array.map(formatDate);
-    var number_of_steps = parseInt(formatted_dates.length / 10);
+    var number_of_steps = parseInt(formatted_dates.length / 10) + 1;
 
     $('#chart-area').highcharts({
         chart: { type: 'column' },
@@ -386,6 +383,8 @@ $(function() {
     });
     
     $('#chart-area-margin').html("<br/><br/><br/>");
+    console.log(date_array);
+    console.log(daily_milage_array);
 
   }
 
