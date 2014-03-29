@@ -133,7 +133,6 @@ $(function() {
       for (k = 0; k < window.lines.length; k++) {
         var this_pair = window.lines[k];
         if (this_pair["start_station"] === start_station && this_pair["end_station"] === end_station) {
-          // console.log("Found a match in the CSV file!");
           var milage = parseFloat(this_pair["distance"] * 0.000621371);   // Distances in the CSV are stored as meters, so convert them to miles here
           window.my_divvy_data[i]["milage"] = milage;
           window.total_milage += milage;
@@ -383,8 +382,6 @@ $(function() {
     });
     
     $('#chart-area-margin').html("<br/><br/><br/>");
-    console.log(date_array);
-    console.log(daily_milage_array);
 
   }
 
@@ -467,7 +464,7 @@ $(function() {
     $.ajax({
       type: "POST",
       url: "http://divvybrags-leaderboard.herokuapp.com/new_entry", 
-      data: { name: user_name, miles: total_milage, city: "Chicago", extra_unique_id: window.extra_unique_id },
+      data: { leaderboard_post: { name: user_name, miles: total_milage, city: "Chicago", extra_unique_id: window.extra_unique_id } },
       success: function(data) { 
         $('#leaderboard').html("");
         var my_entry = data["my_entry"];
