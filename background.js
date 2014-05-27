@@ -48,6 +48,8 @@ $(function() {
   content_html += "</div></div>";
   $('#content').after(content_html);  
 
+  console.log("This is a thing!")
+  
   $('table').before("<div id='chart-area'></div><div id='chart-area-margin'></div>");
 
   window.total_milage = 0; 

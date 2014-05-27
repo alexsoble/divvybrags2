@@ -3,7 +3,7 @@
 
   "name": "DivvyBrags",
   "description": "Liberate your bikeshare data.",
-  "version": "2.2.5",
+  "version": "2.2.6",
 
   "icons": { 
     "48": "icon48.png"
@@ -11,7 +11,7 @@
 
   "content_scripts": [
     {
-      "matches": ["https://divvybikes.com/account/trips"],
+      "matches": ["https://www.divvybikes.com/account/trips"],
       "js": [ 
         "jquery.js", 
         "highcharts.js", 
