@@ -106,16 +106,17 @@ $(function() {
             for (var i = 0; i <= data.length - 1; i++) {
               var month = leaderboard[i]
               var month_name = Object.keys(month);
-              var leaderboard_entry = data[i];
-              var leaderboard_position = Object.keys(leaderboard_entry)[0];
-              var name = leaderboard_entry[leaderboard_position]["name"];
-              var miles = leaderboard_entry[leaderboard_position]["miles"];
-              if (leaderboard_entry[leaderboard_position]["extra_unique_id"] === window.extra_unique_id) {
-                window.username = name;
+              leaderboard_html += "<h5 style='font-style: italic;'>" + month_name + "</h5><br/>";
+              for (var k = 0; k < month[month_name].length; k++) {
+                var leaderboard_entry = month[month_name][k];
+                var rank = Object.keys(leaderboard_entry);
+                var name = leaderboard_entry[rank]["name"];
+                var miles = leaderboard_entry[rank]["miles"];
+                leaderboard_html += "<h10>" + rank + ". " + name + ": " + miles + "mi</h10><br/>";
               }
-              var entry_html = leaderboard_position + ". " + name + ": " + miles + "mi<br/>";
-              $('#leaderboard').append(entry_html);
+              leaderboard_html += "<br/>"
             }
+            $("#leaderboard").html(leaderboard_html);
           }
         });
       }
