@@ -277,7 +277,7 @@ $(function() {
     }
     notice_area_html += "</p><p class='notice-area-text'>Time Divvying: " + window.total_hours + "h, " + window.remainder_minutes + "m, " + window.remainder_seconds + "s</p>";
     notice_area_html += "<p class='notice-area-text'>Approximate distance traveled: <span id='total-milage'>" + window.total_milage + "</span>mi</p>";
-    $('#calculate-my-milage').html("My stats");
+    $('#calculate-my-milage').html("My "+ window.this_month +" stats");
     $('#calculate-my-milage').attr("style","text-decoration: underline;");
     $('#calculate-my-milage').after(notice_area_html);
     if (window.small_trips > 0) {
@@ -454,7 +454,7 @@ $(function() {
       var twitter_img = chrome.extension.getURL("twitter_logo_white.png");
       var star_img = chrome.extension.getURL("star_icon_white.png");
       var tweet_it_html = "<a class='bragging-type-option' target='_blank' href='";
-      tweet_it_html += "https://twitter.com/share?text=My bikeshare stats:%20" + window.number_of_trips + "%20trips.%20" + window.total_hours + "%20hours,%20" + window.remainder_minutes + "%20minutes,%20" + window.remainder_seconds + "%20seconds.%20" + window.total_milage + "%20miles.%20via&url=http://divvybrags.com&hashtags=DivvyBrags,bikeCHI,DivvyOn";
+      tweet_it_html += "https://twitter.com/share?text=My " + window.this_month + " bikeshare stats:%20" + window.number_of_trips + "%20trips.%20" + window.total_hours + "%20hours,%20" + window.remainder_minutes + "%20minutes,%20" + window.remainder_seconds + "%20seconds.%20" + window.total_milage + "%20miles.%20via&url=http://divvybrags.com&hashtags=DivvyBrags,bikeCHI,DivvyOn";
       tweet_it_html += "'><img src='" + twitter_img + "' width='48px' height='48px'/><br/>";
       tweet_it_html += "Tweet It</a>";
       var brag_html = "<a id='post-to-leaderboard' class='bragging-type-option'>";
@@ -503,31 +503,29 @@ $(function() {
       type: "POST",
       url: "http://divvybrags-leaderboard.herokuapp.com/new_entry", 
       data: { leaderboard_post: { name: user_name, miles: total_milage, city: "Chicago", extra_unique_id: window.extra_unique_id } },
-      success: function(data) { 
-        $('#leaderboard').html("");
-        var my_entry = data["my_entry"];
-        var my_rank = Object.keys(my_entry)[0];
-        var my_name = my_entry[my_rank]["name"];
+      success: function(data) {
+        leaderboard_html = "";
         var leaderboard = data["leaderboard"];
-        var leaderboard_size = leaderboard.length;
-        $('#brag-area').html("<span style='font-size: 16px;'>Your rank = #" + my_rank + "</span>");
-        for (var i = 0; i <= leaderboard_size - 1; i++) {
-          var leaderboard_entry = leaderboard[i];
-          var leaderboard_rank = Object.keys(leaderboard_entry)[0];
-          var name = leaderboard_entry[leaderboard_rank]["name"];
-          var miles = leaderboard_entry[leaderboard_rank]["miles"];
-          if (name !== my_name) {
-            var entry_html = leaderboard_rank + ". " + name + ": " + miles + "mi<br/>";
-          } else {
-            // Your own leaderboard entry extra-big
-            var entry_html = "<span class='my-leaderboard-entry'>" + leaderboard_rank + ". " + name + ": " + miles + "mi</span><br/>";
+        for (var i = 0; i <=leaderboard.length -1; i++){
+          var month = leaderboard[i];
+          var month_name = Object.keys(month);
+          leaderboard_html += "<h5 style ='font-style: italic;'>" + month_name + "</h5><br/>";
+          for (var k = 0; k<month[month_name].length; k++){
+            var leaderboard_entry = month[month_name][k];
+            var rank = Object.keys(leaderboard_entry);
+            var name = leaderboard_entry[rank]["name"];
+            var miles = leaderboard_entry[rank]["miles"];
+            leaderboard_html += "<h10>" + rank + ". " + name + ": " + miles + "mi</h10><br/>";
           }
-          $('#leaderboard').append(entry_html);
+          leaderboard_html += "<br/>"
         }
-        window.posted_to_leaderboard = true; 
+        $('#leaderboard').html(leaderboard_html);
+        $('#username-area').html("");
+        window.posted_to_leaderboard = true;
       }
     });
   }
+      
 
   // Show/hide the sidebar
   $('#toggle-divvybrags').click(function() {
