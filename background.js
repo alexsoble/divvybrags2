@@ -80,8 +80,6 @@ $(function() {
   content_html += "</div></div>";
 
   $('#content').after(content_html);  
-
-  console.log("This is a thing!")
   
   $('table').before("<div id='chart-area'></div><div id='chart-area-margin'></div>");
 
@@ -107,7 +105,6 @@ $(function() {
             var leaderboard = data
             for (var i = 0; i <= leaderboard.length - 1; i++) {
               var month = leaderboard[i];
-              console.log ("MONTH! "+ month)
               var month_name = Object.keys(month);
               leaderboard_html += "<h5 style='font-style: italic;'>" + month_name + "</h5><br/>";
               for (var k = 0; k < month[month_name].length; k++) {
