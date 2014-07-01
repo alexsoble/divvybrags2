@@ -107,7 +107,7 @@ $(function() {
             var leaderboard = data
             for (var i = 0; i <= leaderboard.length - 1; i++) {
               var month = leaderboard[i];
-              console.log ("MONTH! "+ JSON.parse(JSON.stringify(month)))
+              console.log ("MONTH! "+ month)
               var month_name = Object.keys(month);
               leaderboard_html += "<h5 style='font-style: italic;'>" + month_name + "</h5><br/>";
               for (var k = 0; k < month[month_name].length; k++) {
