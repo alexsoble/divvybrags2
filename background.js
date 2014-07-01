@@ -42,7 +42,7 @@ $(function() {
       window.extra_unique_id = parseInt(window.my_divvy_data[window.my_divvy_data.length-1]["trip_id"].substr(3,5) + window.my_divvy_data[window.my_divvy_data.length-2]["trip_id"].substr(3,5) + window.my_divvy_data[window.my_divvy_data.length-3]["trip_id"].substr(3,5));
     }else if (window.my_divvy_data.length == 1){
       if (window.my_divvy_data[0].start_station!=""){
-        window.extra_unique_id = parseInt(window.my_divvy_data[0]["trip_id"].substr(3,4) + String(Math.random()).substr(2,4) //// CHECK THIS!!!
+        window.extra_unique_id = parseInt(window.my_divvy_data[0]["trip_id"].substr(3,4) + String(Math.random()).substr(2, 4)); //// CHECK THIS!!!
         window.one_trip_month = true;     
       } else {
         window.zero_trips_month = true;
@@ -60,17 +60,17 @@ $(function() {
   content_html += "<div id='toggle-divvybrags'>X</div><br/><br/>";
   content_html += "<div id='divvybrags-body'>";
   content_html += "<h2>DivvyBrags</h2><br/><br/>";
-  if (window.one_trip_month == false && window.zero_trips_month = false){
-  var loader_img = chrome.extension.getURL("ajax-loader.gif");    // Loading gif animation
-  content_html += "<p id='calculate-my-milage' class='divvybrags-option'><img id='loading-gif' src='" + loader_img + "'>&nbsp;Calculating Mileage</p>";
-  content_html += "<p id='milage-note'></p>";
-  content_html += "<p id='brag-toggle' class='divvybrags-option'>Brag</p>";
-  content_html += "<p id='brag-area'></p>";
-  content_html += "<p id='make-chart' class='divvybrags-option'>Chart My Data</p>";
-  content_html += "<p id='download-csv' class='divvybrags-option'>Download as CSV</p>";
-  content_html += "<p id='chart-making-status'></p>";
-  content_html += "<p id='leaderboard-toggle' class='divvybrags-option'>The Leaderboard</p>";
-  content_html += "<p id='leaderboard'></p>";
+  if (window.one_trip_month == false && window.zero_trips_month == false){
+    var loader_img = chrome.extension.getURL("ajax-loader.gif");    // Loading gif animation
+    content_html += "<p id='calculate-my-milage' class='divvybrags-option'><img id='loading-gif' src='" + loader_img + "'>&nbsp;Calculating Mileage</p>";
+    content_html += "<p id='milage-note'></p>";
+    content_html += "<p id='brag-toggle' class='divvybrags-option'>Brag</p>";
+    content_html += "<p id='brag-area'></p>";
+    content_html += "<p id='make-chart' class='divvybrags-option'>Chart My Data</p>";
+    content_html += "<p id='download-csv' class='divvybrags-option'>Download as CSV</p>";
+    content_html += "<p id='chart-making-status'></p>";
+    content_html += "<p id='leaderboard-toggle' class='divvybrags-option'>The Leaderboard</p>";
+    content_html += "<p id='leaderboard'></p>";
   } else if (window.one_trip_month == true) {
     content_html += "<br/><br/><h5>You only took one trip this month.<br/><br/>Not much to brag about, honestly. </h5>";
   }else if (window.zero_trips_month == true){ 
@@ -103,8 +103,11 @@ $(function() {
           type: "GET",
           url: "http://divvybrags-leaderboard.herokuapp.com/entries.json?city=Chicago", 
           success: function(data) {
-            for (var i = 0; i <= data.length - 1; i++) {
-              var month = leaderboard[i]
+            leaderboard_html = "";
+            var leaderboard = data
+            for (var i = 0; i <= leaderboard.length - 1; i++) {
+              var month = leaderboard[i];
+              console.log ("MONTH! "+ JSON.parse(JSON.stringify(month)))
               var month_name = Object.keys(month);
               leaderboard_html += "<h5 style='font-style: italic;'>" + month_name + "</h5><br/>";
               for (var k = 0; k < month[month_name].length; k++) {
