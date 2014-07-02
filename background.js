@@ -329,7 +329,7 @@ $(function() {
   function makeChart() {
     var additive_milage_array = [];
     var daily_milage_array = [];
-    var cumulative_milage_array = [];
+    var cumulative_milage_array = [0];
     var dates_with_trips = [];
     var last_cumulative_miles = 0;
     var milage_calculated = false;
@@ -373,9 +373,7 @@ $(function() {
           if (dates_with_trips.indexOf(this_trip_date.getTime()) === -1) {
             dates_with_trips.push(this_trip_date.getTime()); 
             daily_milage_array.push(roundTenths(trip["milage"]));
-            if (cumulative_milage_array.length > 0){
-             last_cumulative_miles = cumulative_milage_array[cumulative_milage_array.length -1]
-            }
+            last_cumulative_miles = cumulative_milage_array[cumulative_milage_array.length -1]
             cumulative_milage_array.push(last_cumulative_miles + roundTenths(trip["milage"]));
 
           } else {
