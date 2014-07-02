@@ -73,7 +73,7 @@ $(function() {
     content_html += "<p id='leaderboard'></p>";
   } else if (window.one_trip_month == true) {
     content_html += "<br/><br/><h5>You only took one trip this month.<br/><br/>Not much to brag about, honestly. </h5>";
-  }else if (window.zero_trips_month == true){ 
+  } else if (window.zero_trips_month == true){ 
     content_html += "<br/><br/><h5>You didn't take any trips this month.</h5>"; 
     content_html += "<br/><br/><br/><h2 style ='font-size: 50px'>&#9785;</h2>"; //sad face
   }
@@ -345,19 +345,28 @@ $(function() {
     }
 
     // Generating an array with all the dates between user's first Divvy ride and user's most recent Divvy ride
-    first_date = new Date(window.my_divvy_data[window.my_divvy_data.length - 1]["start_date"]);
-    last_date = new Date(window.my_divvy_data[0]["start_date"]);
+    first_date = parseDate(window.my_divvy_data[window.my_divvy_data.length - 1]["start_date"]);
+    console.log ('testSplit: ' + first_date)
+  
+    // console.log ('testSplit: ' + first_date.getDate())
+    last_date = parseDate(window.my_divvy_data[0]["start_date"]);
+    console.log("first and last date: " + first_date + ", " + last_date)
     date_array = getDates(first_date, last_date);
+
+    function parseDate(aDate){
+      aDate = aDate.split(' ')[0]
+      aDate = new Date(aDate)
+      return aDate
+    }
 
     // Stuff arrays with data representing daily trip miles and cumulative trip miles...
     for (var j = 0; j < date_array.length; j++) {
-
       milage_present = false;
 
       // Check to see if the user took bike rides on any given day. If so, add up miles
       for (var i = 0; i < window.my_divvy_data.length; i++) {
         trip = window.my_divvy_data[i];
-        this_trip_date = new Date(trip["start_date"]);
+        this_trip_date = parseDate(trip["start_date"]);
         if (this_trip_date.getTime() === date_array[j].getTime()) {
           milage_present = true;
           if (dates_with_trips.indexOf(this_trip_date.getTime()) === -1) {
@@ -368,10 +377,9 @@ $(function() {
           } else {
             daily_milage_array[daily_milage_array.length - 1] = roundTenths(trip["milage"] + daily_milage_array[daily_milage_array.length - 1])
             cumulative_milage_array[cumulative_milage_array.length -1] = roundTenths(trip["milage"] + cumulative_milage_array[cumulative_milage_array.length -1])
-          }
+          } 
         }
       }
-
       if (milage_present === false) {
         daily_milage_array.push(0);
         last_cumulative_miles = cumulative_milage_array[cumulative_milage_array.length -1]
@@ -414,7 +422,7 @@ $(function() {
           },
         series: [
           { type: 'column', name: 'Miles This Day', data: daily_milage_array, color: '#3DB7E4'},
-          { type: 'spline', name: 'Total Miles', data: cumulative_milage_array, color: '#FF7518', yAxis: 1 }
+          { type: 'spline', name: 'Total Miles This Month', data: cumulative_milage_array, color: '#FF7518', yAxis: 1 }
           ],
         credits: false
     });
