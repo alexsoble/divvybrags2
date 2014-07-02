@@ -7,6 +7,23 @@ $(function() {
   window.posted_to_leaderboard = false; 
   window.time_in_seconds = 0;
   window.small_trips = 0;
+  window.one_trip_month = false;
+  window.zero_trips_month = false;
+  window.month_names = ["January", "February", "March", "April", "May", "June", "July","August", "September", "October", "November", "December"]
+  window.years = ["2013", "2014", "2015", "2016"]
+
+   // Finding which month/year page we're on 
+  var time_range = $(".small-7.columns>h2").text();    // Not the most stable way to find which month we're on but fine for now
+  for (var i = 0; i <= 11; i++) {
+    if (time_range.indexOf(window.month_names[i]) != -1) {
+      window.this_month = window.month_names[i];
+    }
+  }
+  for (var i = 0; i <= 3; i++) {
+    if (time_range.indexOf(window.years[i]) != -1) {
+      window.this_year = window.years[i];
+    }
+  }  
 
   // Scrape the trips info table
   function scrapeDivvyData() {
@@ -21,8 +38,16 @@ $(function() {
       var trip_data = { "trip_id" : trip_id, "start_station" : start_station, "start_date" : start_date, "end_station" : end_station, "end_date" : end_date, "duration" : duration };
       window.my_divvy_data.push(trip_data);
     });
-
-    window.extra_unique_id = parseInt(window.my_divvy_data[window.my_divvy_data.length-1]["trip_id"].substr(3,5) + window.my_divvy_data[window.my_divvy_data.length-2]["trip_id"].substr(3,5) + window.my_divvy_data[window.my_divvy_data.length-3]["trip_id"].substr(3,5));
+    if (window.my_divvy_data.length > 1){
+      window.extra_unique_id = parseInt(window.my_divvy_data[window.my_divvy_data.length-1]["trip_id"].substr(3,5) + window.my_divvy_data[window.my_divvy_data.length-2]["trip_id"].substr(3,5) + window.my_divvy_data[window.my_divvy_data.length-3]["trip_id"].substr(3,5));
+    }else if (window.my_divvy_data.length == 1){
+      if (window.my_divvy_data[0].start_station!=""){
+        window.extra_unique_id = parseInt(window.my_divvy_data[0]["trip_id"].substr(3,4) + String(Math.random()).substr(2, 4)); //// CHECK THIS!!!
+        window.one_trip_month = true;     
+      } else {
+        window.zero_trips_month = true;
+      }
+    }
   }
   scrapeDivvyData();
 
@@ -35,20 +60,26 @@ $(function() {
   content_html += "<div id='toggle-divvybrags'>X</div><br/><br/>";
   content_html += "<div id='divvybrags-body'>";
   content_html += "<h2>DivvyBrags</h2><br/><br/>";
-  var loader_img = chrome.extension.getURL("ajax-loader.gif");    // Loading gif animation
-  content_html += "<p id='calculate-my-milage' class='divvybrags-option'><img id='loading-gif' src='" + loader_img + "'>&nbsp;Calculating Mileage</p>";
-  content_html += "<p id='milage-note'></p>";
-  content_html += "<p id='brag-toggle' class='divvybrags-option'>Brag</p>";
-  content_html += "<p id='brag-area'></p>";
-  content_html += "<p id='make-chart' class='divvybrags-option'>Chart My Data</p>";
-  content_html += "<p id='download-csv' class='divvybrags-option'>Download as CSV</p>";
-  content_html += "<p id='chart-making-status'></p>";
-  content_html += "<p id='leaderboard-toggle' class='divvybrags-option'>The Leaderboard</p>";
-  content_html += "<p id='leaderboard'></p>";
+  if (window.one_trip_month == false && window.zero_trips_month == false){
+    var loader_img = chrome.extension.getURL("ajax-loader.gif");    // Loading gif animation
+    content_html += "<p id='calculate-my-milage' class='divvybrags-option'><img id='loading-gif' src='" + loader_img + "'>&nbsp;Calculating Mileage</p>";
+    content_html += "<p id='milage-note'></p>";
+    content_html += "<p id='brag-toggle' class='divvybrags-option'>Brag</p>";
+    content_html += "<p id='brag-area'></p>";
+    content_html += "<p id='make-chart' class='divvybrags-option'>Chart My Data</p>";
+    content_html += "<p id='download-csv' class='divvybrags-option'>Download as CSV</p>";
+    content_html += "<p id='chart-making-status'></p>";
+    content_html += "<p id='leaderboard-toggle' class='divvybrags-option'>The Leaderboard</p>";
+    content_html += "<p id='leaderboard'></p>";
+  } else if (window.one_trip_month == true) {
+    content_html += "<br/><br/><h5>You only took one trip this month.<br/><br/>Not much to brag about, honestly. </h5>";
+  } else if (window.zero_trips_month == true){ 
+    content_html += "<br/><br/><h5>You didn't take any trips this month.</h5>"; 
+    content_html += "<br/><br/><br/><h2 style ='font-size: 50px'>&#9785;</h2>"; //sad face
+  }
   content_html += "</div></div>";
-  $('#content').after(content_html);  
 
-  console.log("This is a thing!")
+  $('#content').after(content_html);  
   
   $('table').before("<div id='chart-area'></div><div id='chart-area-margin'></div>");
 
@@ -70,17 +101,22 @@ $(function() {
           type: "GET",
           url: "http://divvybrags-leaderboard.herokuapp.com/entries.json?city=Chicago", 
           success: function(data) {
-            for (var i = 0; i <= data.length - 1; i++) {
-              var leaderboard_entry = data[i];
-              var leaderboard_position = Object.keys(leaderboard_entry)[0];
-              var name = leaderboard_entry[leaderboard_position]["name"];
-              var miles = leaderboard_entry[leaderboard_position]["miles"];
-              if (leaderboard_entry[leaderboard_position]["extra_unique_id"] === window.extra_unique_id) {
-                window.username = name;
+            leaderboard_html = "";
+            var leaderboard = data
+            for (var i = 0; i <= leaderboard.length - 1; i++) {
+              var month = leaderboard[i];
+              var month_name = Object.keys(month);
+              leaderboard_html += "<h5 style='font-style: italic;'>" + month_name + "</h5><br/>";
+              for (var k = 0; k < month[month_name].length; k++) {
+                var leaderboard_entry = month[month_name][k];
+                var rank = Object.keys(leaderboard_entry);
+                var name = leaderboard_entry[rank]["name"];
+                var miles = leaderboard_entry[rank]["miles"];
+                leaderboard_html += "<h10>" + rank + ". " + name + ": " + miles + "mi</h10><br/>";
               }
-              var entry_html = leaderboard_position + ". " + name + ": " + miles + "mi<br/>";
-              $('#leaderboard').append(entry_html);
+              leaderboard_html += "<br/>"
             }
+            $("#leaderboard").html(leaderboard_html);
           }
         });
       }
@@ -241,7 +277,7 @@ $(function() {
     }
     notice_area_html += "</p><p class='notice-area-text'>Time Divvying: " + window.total_hours + "h, " + window.remainder_minutes + "m, " + window.remainder_seconds + "s</p>";
     notice_area_html += "<p class='notice-area-text'>Approximate distance traveled: <span id='total-milage'>" + window.total_milage + "</span>mi</p>";
-    $('#calculate-my-milage').html("My stats");
+    $('#calculate-my-milage').html("My "+ window.this_month +" stats");
     $('#calculate-my-milage').attr("style","text-decoration: underline;");
     $('#calculate-my-milage').after(notice_area_html);
     if (window.small_trips > 0) {
@@ -293,8 +329,9 @@ $(function() {
   function makeChart() {
     var additive_milage_array = [];
     var daily_milage_array = [];
-    var cumulative_milage_array = [0];
+    var cumulative_milage_array = [];
     var dates_with_trips = [];
+    var last_cumulative_miles = 0;
     var milage_calculated = false;
 
     for (var i = 0; i < window.my_divvy_data.length; i++) {
@@ -309,30 +346,42 @@ $(function() {
     }
 
     // Generating an array with all the dates between user's first Divvy ride and user's most recent Divvy ride
-    first_date = new Date(window.my_divvy_data[window.my_divvy_data.length - 1]["start_date"]);
-    last_date = new Date(window.my_divvy_data[0]["start_date"]);
+    first_date = parseDate(window.my_divvy_data[window.my_divvy_data.length - 1]["start_date"]);
+    console.log ('testSplit: ' + first_date)
+  
+    // console.log ('testSplit: ' + first_date.getDate())
+    last_date = parseDate(window.my_divvy_data[0]["start_date"]);
+    console.log("first and last date: " + first_date + ", " + last_date)
     date_array = getDates(first_date, last_date);
+
+    function parseDate(aDate){
+      aDate = aDate.split(' ')[0]
+      aDate = new Date(aDate)
+      return aDate
+    }
 
     // Stuff arrays with data representing daily trip miles and cumulative trip miles...
     for (var j = 0; j < date_array.length; j++) {
-
       milage_present = false;
 
       // Check to see if the user took bike rides on any given day. If so, add up miles
       for (var i = 0; i < window.my_divvy_data.length; i++) {
         trip = window.my_divvy_data[i];
-        this_trip_date = new Date(trip["start_date"]);
+        this_trip_date = parseDate(trip["start_date"]);
         if (this_trip_date.getTime() === date_array[j].getTime()) {
           milage_present = true;
           if (dates_with_trips.indexOf(this_trip_date.getTime()) === -1) {
             dates_with_trips.push(this_trip_date.getTime()); 
             daily_milage_array.push(roundTenths(trip["milage"]));
-            last_cumulative_miles = cumulative_milage_array[cumulative_milage_array.length -1]
+            if (cumulative_milage_array.length > 0){
+             last_cumulative_miles = cumulative_milage_array[cumulative_milage_array.length -1]
+            }
             cumulative_milage_array.push(last_cumulative_miles + roundTenths(trip["milage"]));
+
           } else {
             daily_milage_array[daily_milage_array.length - 1] = roundTenths(trip["milage"] + daily_milage_array[daily_milage_array.length - 1])
             cumulative_milage_array[cumulative_milage_array.length -1] = roundTenths(trip["milage"] + cumulative_milage_array[cumulative_milage_array.length -1])
-          }
+          }            
         }
       }
 
@@ -378,7 +427,7 @@ $(function() {
           },
         series: [
           { type: 'column', name: 'Miles This Day', data: daily_milage_array, color: '#3DB7E4'},
-          { type: 'spline', name: 'Total Miles', data: cumulative_milage_array, color: '#FF7518', yAxis: 1 }
+          { type: 'spline', name: 'Total Miles This Month', data: cumulative_milage_array, color: '#FF7518', yAxis: 1 }
           ],
         credits: false
     });
@@ -418,7 +467,7 @@ $(function() {
       var twitter_img = chrome.extension.getURL("twitter_logo_white.png");
       var star_img = chrome.extension.getURL("star_icon_white.png");
       var tweet_it_html = "<a class='bragging-type-option' target='_blank' href='";
-      tweet_it_html += "https://twitter.com/share?text=My bikeshare stats:%20" + window.number_of_trips + "%20trips.%20" + window.total_hours + "%20hours,%20" + window.remainder_minutes + "%20minutes,%20" + window.remainder_seconds + "%20seconds.%20" + window.total_milage + "%20miles.%20via&url=http://divvybrags.com&hashtags=DivvyBrags,bikeCHI,DivvyOn";
+      tweet_it_html += "https://twitter.com/share?text=My " + window.this_month + " bikeshare stats:%20" + window.number_of_trips + "%20trips.%20" + window.total_hours + "%20hours,%20" + window.remainder_minutes + "%20minutes,%20" + window.remainder_seconds + "%20seconds.%20" + window.total_milage + "%20miles.%20via&url=http://divvybrags.com&hashtags=DivvyBrags,bikeCHI,DivvyOn";
       tweet_it_html += "'><img src='" + twitter_img + "' width='48px' height='48px'/><br/>";
       tweet_it_html += "Tweet It</a>";
       var brag_html = "<a id='post-to-leaderboard' class='bragging-type-option'>";
@@ -467,31 +516,29 @@ $(function() {
       type: "POST",
       url: "http://divvybrags-leaderboard.herokuapp.com/new_entry", 
       data: { leaderboard_post: { name: user_name, miles: total_milage, city: "Chicago", extra_unique_id: window.extra_unique_id } },
-      success: function(data) { 
-        $('#leaderboard').html("");
-        var my_entry = data["my_entry"];
-        var my_rank = Object.keys(my_entry)[0];
-        var my_name = my_entry[my_rank]["name"];
+      success: function(data) {
+        leaderboard_html = "";
         var leaderboard = data["leaderboard"];
-        var leaderboard_size = leaderboard.length;
-        $('#brag-area').html("<span style='font-size: 16px;'>Your rank = #" + my_rank + "</span>");
-        for (var i = 0; i <= leaderboard_size - 1; i++) {
-          var leaderboard_entry = leaderboard[i];
-          var leaderboard_rank = Object.keys(leaderboard_entry)[0];
-          var name = leaderboard_entry[leaderboard_rank]["name"];
-          var miles = leaderboard_entry[leaderboard_rank]["miles"];
-          if (name !== my_name) {
-            var entry_html = leaderboard_rank + ". " + name + ": " + miles + "mi<br/>";
-          } else {
-            // Your own leaderboard entry extra-big
-            var entry_html = "<span class='my-leaderboard-entry'>" + leaderboard_rank + ". " + name + ": " + miles + "mi</span><br/>";
+        for (var i = 0; i <=leaderboard.length -1; i++){
+          var month = leaderboard[i];
+          var month_name = Object.keys(month);
+          leaderboard_html += "<h5 style ='font-style: italic;'>" + month_name + "</h5><br/>";
+          for (var k = 0; k<month[month_name].length; k++){
+            var leaderboard_entry = month[month_name][k];
+            var rank = Object.keys(leaderboard_entry);
+            var name = leaderboard_entry[rank]["name"];
+            var miles = leaderboard_entry[rank]["miles"];
+            leaderboard_html += "<h10>" + rank + ". " + name + ": " + miles + "mi</h10><br/>";
           }
-          $('#leaderboard').append(entry_html);
+          leaderboard_html += "<br/>"
         }
-        window.posted_to_leaderboard = true; 
+        $('#leaderboard').html(leaderboard_html);
+        $('#username-area').html("");
+        window.posted_to_leaderboard = true;
       }
     });
   }
+      
 
   // Show/hide the sidebar
   $('#toggle-divvybrags').click(function() {
