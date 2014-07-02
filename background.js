@@ -329,8 +329,9 @@ $(function() {
   function makeChart() {
     var additive_milage_array = [];
     var daily_milage_array = [];
-    var cumulative_milage_array = [0];
+    var cumulative_milage_array = [];
     var dates_with_trips = [];
+    var last_cumulative_miles = 0;
     var milage_calculated = false;
 
     for (var i = 0; i < window.my_divvy_data.length; i++) {
@@ -372,14 +373,18 @@ $(function() {
           if (dates_with_trips.indexOf(this_trip_date.getTime()) === -1) {
             dates_with_trips.push(this_trip_date.getTime()); 
             daily_milage_array.push(roundTenths(trip["milage"]));
-            last_cumulative_miles = cumulative_milage_array[cumulative_milage_array.length -1]
+            if (cumulative_milage_array.length > 0){
+             last_cumulative_miles = cumulative_milage_array[cumulative_milage_array.length -1]
+            }
             cumulative_milage_array.push(last_cumulative_miles + roundTenths(trip["milage"]));
+
           } else {
             daily_milage_array[daily_milage_array.length - 1] = roundTenths(trip["milage"] + daily_milage_array[daily_milage_array.length - 1])
             cumulative_milage_array[cumulative_milage_array.length -1] = roundTenths(trip["milage"] + cumulative_milage_array[cumulative_milage_array.length -1])
-          } 
+          }            
         }
       }
+
       if (milage_present === false) {
         daily_milage_array.push(0);
         last_cumulative_miles = cumulative_milage_array[cumulative_milage_array.length -1]
