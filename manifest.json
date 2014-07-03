@@ -3,7 +3,7 @@
 
   "name": "DivvyBrags",
   "description": "Liberate your bikeshare data.",
-  "version": "2.2.6",
+  "version": "2.3.0",
 
   "icons": { 
     "48": "icon48.png"
