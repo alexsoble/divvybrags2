@@ -513,7 +513,7 @@ $(function() {
     $.ajax({
       type: "POST",
       url: "http://divvybrags-leaderboard.herokuapp.com/new_entry", 
-      data: { leaderboard_post: { name: user_name, miles: total_milage, city: "Chicago", extra_unique_id: window.extra_unique_id, month: window.this_month, year: window.this_year  } },
+      data: { leaderboard_post: { name: user_name, miles: total_milage, city: "Chicago", month: window.this_month, year: window.this_year  } },
       success: function(data) {
         leaderboard_html = "";
         var leaderboard = data["leaderboard"];
