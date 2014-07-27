@@ -37,7 +37,8 @@
 
   "permissions": [ 
     "http://divvybrags-leaderboard.herokuapp.com/",
-    "https://maps.googleapis.com/maps/api/distancematrix/json"
+    "https://maps.googleapis.com/maps/api/distancematrix/json",
+    "storage"
   ]
 
 }

@@ -85,7 +85,17 @@ $(function() {
 
   window.total_milage = 0; 
   window.trips_calculated = 0;
-  window.username = null;
+
+  function checkUserID() {
+    chrome.storage.sync.get('extra_unique_id', function(result) {
+      if (result === null) {
+        var my_extra_unique_id = Math.random().toString(36).substring(7);
+        // Save id using Chrome extension storage.
+        chrome.storage.sync.set({'extra_unique_id': my_extra_unique_id}, function() {});
+      } 
+    });
+  }
+  checkUserID();
 
   var station_distances_url = chrome.extension.getURL("station_distances_by_bicycle.csv");
 
