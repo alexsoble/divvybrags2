@@ -357,11 +357,7 @@ $(function() {
 
     // Generating an array with all the dates between user's first Divvy ride and user's most recent Divvy ride
     first_date = parseDate(window.my_divvy_data[window.my_divvy_data.length - 1]["start_date"]);
-    console.log ('testSplit: ' + first_date)
-  
-    // console.log ('testSplit: ' + first_date.getDate())
     last_date = parseDate(window.my_divvy_data[0]["start_date"]);
-    console.log("first and last date: " + first_date + ", " + last_date)
     date_array = getDates(first_date, last_date);
 
     function parseDate(aDate){
@@ -512,6 +508,37 @@ $(function() {
     });
   });
 
+  function checkName(user_name){
+    var leaderboard_array = $('div#divvybrags p#leaderboard').children();
+    var this_month_and_year = this_month + " " + this_year;
+    var month_leaderboard_text = " " ;
+    var yes_read = false;
+    var br_flag = false;
+    //Collect leaderboard for this month
+    for (i = 0; i<leaderboard_array.length ; i++ ){
+      if (leaderboard_array[i].innerText == this_month_and_year.toUpperCase()) {
+        yes_read = true;
+      }
+      if (yes_read){
+        if (leaderboard_array[i].localName == 'h10'){
+          month_leaderboard_text += leaderboard_array[i].innerText + " "
+          br_flag = false;
+        }
+        else if (leaderboard_array[i].localName == 'br' && br_flag){
+          break;
+        }
+        else if (leaderboard_array[i].localName == 'br'){
+          br_flag = true;
+        }
+      }
+    }
+    //Search leaderboard text for name
+    console.log ('here is month text: ' + month_leaderboard_text);
+    if (month_leaderboard_text.indexOf('Malynda')!= -1){
+      console.log ('found the name!!');
+    } else { console.log ('this is a new name for this month!')}
+  }
+
   function postIt() {
     var total_milage = window.total_milage;
     if (window.username === null) {
@@ -519,32 +546,33 @@ $(function() {
     } else {
       var user_name = window.username;
     }
+    checkName(user_name);
 
-    $.ajax({
-      type: "POST",
-      url: "http://divvybrags-leaderboard.herokuapp.com/new_entry", 
-      data: { leaderboard_post: { name: user_name, miles: total_milage, city: "Chicago", month: window.this_month, year: window.this_year  } },
-      success: function(data) {
-        leaderboard_html = "";
-        var leaderboard = data["leaderboard"];
-        for (var i = 0; i <=leaderboard.length -1; i++){
-          var month = leaderboard[i];
-          var month_name = Object.keys(month);
-          leaderboard_html += "<h5 style ='font-style: italic;'>" + month_name + "</h5><br/>";
-          for (var k = 0; k<month[month_name].length; k++){
-            var leaderboard_entry = month[month_name][k];
-            var rank = Object.keys(leaderboard_entry);
-            var name = leaderboard_entry[rank]["name"];
-            var miles = leaderboard_entry[rank]["miles"];
-            leaderboard_html += "<h10>" + rank + ". " + name + ": " + miles + "mi</h10><br/>";
-          }
-          leaderboard_html += "<br/>"
-        }
-        $('#leaderboard').html(leaderboard_html);
-        $('#username-area').html("");
-        window.posted_to_leaderboard = true;
-      }
-    });
+    // $.ajax({
+    //   type: "POST",
+    //   url: "http://divvybrags-leaderboard.herokuapp.com/new_entry", 
+    //   data: { leaderboard_post: { name: user_name, miles: total_milage, city: "Chicago", month: window.this_month, year: window.this_year  } },
+    //   success: function(data) {
+    //     leaderboard_html = "";
+    //     var leaderboard = data["leaderboard"];
+    //     for (var i = 0; i <=leaderboard.length -1; i++){
+    //       var month = leaderboard[i];
+    //       var month_name = Object.keys(month);
+    //       leaderboard_html += "<h5 style ='font-style: italic;'>" + month_name + "</h5><br/>";
+    //       for (var k = 0; k<month[month_name].length; k++){
+    //         var leaderboard_entry = month[month_name][k];
+    //         var rank = Object.keys(leaderboard_entry);
+    //         var name = leaderboard_entry[rank]["name"];
+    //         var miles = leaderboard_entry[rank]["miles"];
+    //         leaderboard_html += "<h10>" + rank + ". " + name + ": " + miles + "mi</h10><br/>";
+    //       }
+    //       leaderboard_html += "<br/>"
+    //     }
+    //     $('#leaderboard').html(leaderboard_html);
+    //     $('#username-area').html("");
+    //     window.posted_to_leaderboard = true;
+    //   }
+    // });
   }
       
 
