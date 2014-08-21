@@ -501,7 +501,7 @@ $(function() {
   function checkName(user_name){
     var leaderboard_array = $('div#divvybrags p#leaderboard').children();
     var this_month_and_year = this_month + " " + this_year;
-    var month_leaderboard_text = " " ;
+    var month_leaderboard_text = []; ;
     var yes_read = false;
     var br_flag = false;
     //Collect leaderboard for this month
@@ -511,7 +511,9 @@ $(function() {
       }
       if (yes_read){
         if (leaderboard_array[i].localName == 'h10'){
-          month_leaderboard_text += leaderboard_array[i].innerText + " "
+					var aName = (leaderboard_array[i].innerText).split(':')[0];
+					aName = aName.split('.')[1];
+          month_leaderboard_text.push(aName.trim());
           br_flag = false;
         }
         else if (leaderboard_array[i].localName == 'br' && br_flag){
@@ -523,6 +525,7 @@ $(function() {
       }
     }
     //Search leaderboard text for name
+		console.log('this is leaderboard: ' + month_leaderboard_text)
     if (month_leaderboard_text.indexOf(user_name)!= -1){
       console.log ('found the name!!');
 			return true;
@@ -540,7 +543,7 @@ $(function() {
       var user_name = window.username;
     }
     var update_flag = checkName(user_name);
-		console.log ("The test!: " + testThis)
+		console.log ("The test!: " + update_flag)
 
     $.ajax({
       type: "POST",
