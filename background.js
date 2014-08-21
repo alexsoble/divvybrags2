@@ -3,8 +3,8 @@ $(function() {
 	window.my_divvy_data = [];
   var total_trips = 0;
   window.calculating = false;
-  window.showing_sidebar = true; 
-  window.posted_to_leaderboard = false; 
+  window.showing_sidebar = true;
+  window.posted_to_leaderboard = false;
   window.time_in_seconds = 0;
   window.small_trips = 0;
   window.one_trip_month = false;
@@ -12,7 +12,7 @@ $(function() {
   window.month_names = ["January", "February", "March", "April", "May", "June", "July","August", "September", "October", "November", "December"]
   window.years = ["2013", "2014", "2015", "2016"]
 
-   // Finding which month/year page we're on 
+   // Finding which month/year page we're on
   var time_range = $(".small-7.columns>h2").text();    // Not the most stable way to find which month we're on but fine for now
   for (var i = 0; i <= 11; i++) {
     if (time_range.indexOf(window.month_names[i]) != -1) {
@@ -23,7 +23,7 @@ $(function() {
     if (time_range.indexOf(window.years[i]) != -1) {
       window.this_year = window.years[i];
     }
-  }  
+  }
 
   // Scrape the trips info table
   function scrapeDivvyData() {
@@ -43,7 +43,7 @@ $(function() {
     }else if (window.my_divvy_data.length == 1){
       if (window.my_divvy_data[0].start_station!=""){
         window.extra_unique_id = parseInt(window.my_divvy_data[0]["trip_id"].substr(3,4) + String(Math.random()).substr(2, 4)); //// CHECK THIS!!!
-        window.one_trip_month = true;     
+        window.one_trip_month = true;
       } else {
         window.zero_trips_month = true;
       }
@@ -73,17 +73,17 @@ $(function() {
     content_html += "<p id='leaderboard'></p>";
   } else if (window.one_trip_month == true) {
     content_html += "<br/><br/><h5>You only took one trip this month.<br/><br/>Not much to brag about, honestly. </h5>";
-  } else if (window.zero_trips_month == true){ 
-    content_html += "<br/><br/><h5>You didn't take any trips this month.</h5>"; 
+  } else if (window.zero_trips_month == true){
+    content_html += "<br/><br/><h5>You didn't take any trips this month.</h5>";
     content_html += "<br/><br/><br/><h2 style ='font-size: 50px'>&#9785;</h2>"; //sad face
   }
   content_html += "</div></div>";
 
-  $('#content').after(content_html);  
-  
+  $('#content').after(content_html);
+
   $('table').before("<div id='chart-area'></div><div id='chart-area-margin'></div>");
 
-  window.total_milage = 0; 
+  window.total_milage = 0;
   window.trips_calculated = 0;
 
   function checkUserID() {
@@ -92,7 +92,7 @@ $(function() {
         var my_extra_unique_id = Math.random().toString(36).substring(7);
         // Save id using Chrome extension storage.
         chrome.storage.sync.set({'extra_unique_id': my_extra_unique_id}, function() {});
-      } 
+      }
     });
   }
   checkUserID();
@@ -106,10 +106,10 @@ $(function() {
       dataType: "text",
       success: function(data) {
         processData(data);
-        // Next we'll go retrieve the leaderboard 
+        // Next we'll go retrieve the leaderboard
         $.ajax({
           type: "GET",
-          url: "http://divvybrags-leaderboard.herokuapp.com/entries.json?city=Chicago", 
+          url: "http://divvybrags-leaderboard.herokuapp.com/entries.json?city=Chicago",
           success: function(data) {
             leaderboard_html = "";
             var leaderboard = data
@@ -132,7 +132,7 @@ $(function() {
       }
    });
 
-  // This runs automatically once data is loaded 
+  // This runs automatically once data is loaded
   function calculateMyMilage() {
     if (window.calculating === false) {
       window.calculating = true;
@@ -200,7 +200,7 @@ $(function() {
       if (this_trip_seconds < 60) {
         window.small_trips += 1       // If the trip is under one minute and the start/end stations are the same, it's a "small trip"
       }
-      handleNoMilageRow(i)    // No milage for this trip if the start station is the same as the end station 
+      handleNoMilageRow(i)    // No milage for this trip if the start station is the same as the end station
     }
   }
 
@@ -254,7 +254,7 @@ $(function() {
               postResults(total_milage);
             }
           } else {
-            return false 
+            return false
           }
         }
         // If the Google API says we're over the query limit, keep trying until we're not
@@ -264,11 +264,11 @@ $(function() {
           } else {
             $('#milage-note').html("Google Distance Matrix daily limit reached, try again tomorrow. :(");
             $('#loading-gif').remove()
-            return false 
+            return false
           }
         }
         if (data.status === "REQUEST_DENIED" || data.status === "MAX_ELEMENTS_EXCEEDED") {
-          return false 
+          return false
         }
       }
     });
@@ -377,7 +377,7 @@ $(function() {
         if (this_trip_date.getTime() === date_array[j].getTime()) {
           milage_present = true;
           if (dates_with_trips.indexOf(this_trip_date.getTime()) === -1) {
-            dates_with_trips.push(this_trip_date.getTime()); 
+            dates_with_trips.push(this_trip_date.getTime());
             daily_milage_array.push(roundTenths(trip["milage"]));
             last_cumulative_miles = cumulative_milage_array[cumulative_milage_array.length -1]
             cumulative_milage_array.push(last_cumulative_miles + roundTenths(trip["milage"]));
@@ -385,7 +385,7 @@ $(function() {
           } else {
             daily_milage_array[daily_milage_array.length - 1] = roundTenths(trip["milage"] + daily_milage_array[daily_milage_array.length - 1])
             cumulative_milage_array[cumulative_milage_array.length -1] = roundTenths(trip["milage"] + cumulative_milage_array[cumulative_milage_array.length -1])
-          }            
+          }
         }
       }
 
@@ -407,17 +407,17 @@ $(function() {
     $('#chart-area').highcharts({
         chart: { type: 'column' },
         title: { text: 'Divvygraph' },
-        xAxis: { 
+        xAxis: {
           categories: formatted_dates,
           labels: { maxStaggerLines: 1, rotation: 315, step: number_of_steps }
          },
         yAxis:
-          [{ 
-            title: { text: 'Miles This Day', style: { color: '#3DB7E4' } }, 
+          [{
+            title: { text: 'Miles This Day', style: { color: '#3DB7E4' } },
             labels: { style: { color: '#3DB7E4' } }
           },
-          { 
-            title: { text: 'Total Miles Divvied', style: { color: '#FF7518' } }, 
+          {
+            title: { text: 'Total Miles Divvied', style: { color: '#FF7518' } },
             labels: { style: { color: '#FF7518' } },
             opposite: true,
             min: 0,
@@ -435,20 +435,10 @@ $(function() {
           ],
         credits: false
     });
-    
+
     $('#chart-area-margin').html("<br/><br/><br/>");
 
   }
-
-  function downloadCSV() {
-    var csvContent = "data:text/csv;charset=utf-8,";
-    csvContent += "Trip ID,Start Station,Start Date,End Station,End Date,Duration,Approximate Mileage\n"
-    window.my_divvy_data.forEach(function(trip) {
-      csvContent += (trip["trip_id"] + "," + trip["start_station"] + "," + trip["start_date"] + "," + trip["end_station"] + "," + trip["end_date"] + "," + trip["duration"] + "," + trip["milage"] +"\n" );
-    });
-    var encodedUri = encodeURI(csvContent);
-    window.open(encodedUri);
-  };
 
   $('#calculate-my-milage').click(function() {
     calculateMyMilage();
@@ -477,7 +467,7 @@ $(function() {
       var brag_html = "<a id='post-to-leaderboard' class='bragging-type-option'>";
       brag_html += "<img src='" + star_img + "' width='48px' height='48px'/><br/>";
       brag_html += "<span id='post-to-leaderboard-title'>Post To Leaderboard</span></a><span id='username-area'></span><br/><br/><br/>";
-      brag_html += tweet_it_html 
+      brag_html += tweet_it_html
       if (window.posted_to_leaderboard === false) {
         $('#brag-area').html(brag_html);
       } else {
@@ -487,7 +477,7 @@ $(function() {
   });
 
   $('#post-to-leaderboard').livequery(function() {
-    if (window.username === null) {
+    if (window.username === null || window.username == undefined) {
       $(this).click(function() {
         var total_milage = window.total_milage;
         enter_leaderboard_name_html = "Enter your name as you'd like it to appear on the Leaderboard: <br/><input id='username-input' type='text' style='width: 140px'/>";
@@ -533,52 +523,56 @@ $(function() {
       }
     }
     //Search leaderboard text for name
-    console.log ('here is month text: ' + month_leaderboard_text);
-    if (month_leaderboard_text.indexOf('Malynda')!= -1){
+    if (month_leaderboard_text.indexOf(user_name)!= -1){
       console.log ('found the name!!');
-    } else { console.log ('this is a new name for this month!')}
+			return true;
+    } else {
+			console.log ('this is a new name for this month!');
+			return false;
+		}
   }
 
   function postIt() {
     var total_milage = window.total_milage;
-    if (window.username === null) {
+    if (window.username === null || window.username == undefined) {
       var user_name = $('#username-input').val();
     } else {
       var user_name = window.username;
     }
-    checkName(user_name);
+    var update_flag = checkName(user_name);
+		console.log ("The test!: " + testThis)
 
-    // $.ajax({
-    //   type: "POST",
-    //   url: "http://divvybrags-leaderboard.herokuapp.com/new_entry", 
-    //   data: { leaderboard_post: { name: user_name, miles: total_milage, city: "Chicago", month: window.this_month, year: window.this_year  } },
-    //   success: function(data) {
-    //     leaderboard_html = "";
-    //     var leaderboard = data["leaderboard"];
-    //     for (var i = 0; i <=leaderboard.length -1; i++){
-    //       var month = leaderboard[i];
-    //       var month_name = Object.keys(month);
-    //       leaderboard_html += "<h5 style ='font-style: italic;'>" + month_name + "</h5><br/>";
-    //       for (var k = 0; k<month[month_name].length; k++){
-    //         var leaderboard_entry = month[month_name][k];
-    //         var rank = Object.keys(leaderboard_entry);
-    //         var name = leaderboard_entry[rank]["name"];
-    //         var miles = leaderboard_entry[rank]["miles"];
-    //         leaderboard_html += "<h10>" + rank + ". " + name + ": " + miles + "mi</h10><br/>";
-    //       }
-    //       leaderboard_html += "<br/>"
-    //     }
-    //     $('#leaderboard').html(leaderboard_html);
-    //     $('#username-area').html("");
-    //     window.posted_to_leaderboard = true;
-    //   }
-    // });
+    $.ajax({
+      type: "POST",
+      url: "http://divvybrags-leaderboard.herokuapp.com/new_entry",
+      data: { leaderboard_post: { flag: update_flag, name: user_name, miles: total_milage, city: "Chicago", month: window.this_month, year: window.this_year  } },
+      success: function(data) {
+        leaderboard_html = "";
+        var leaderboard = data["leaderboard"];
+        for (var i = 0; i <=leaderboard.length -1; i++){
+          var month = leaderboard[i];
+          var month_name = Object.keys(month);
+          leaderboard_html += "<h5 style ='font-style: italic;'>" + month_name + "</h5><br/>";
+          for (var k = 0; k<month[month_name].length; k++){
+            var leaderboard_entry = month[month_name][k];
+            var rank = Object.keys(leaderboard_entry);
+            var name = leaderboard_entry[rank]["name"];
+            var miles = leaderboard_entry[rank]["miles"];
+            leaderboard_html += "<h10>" + rank + ". " + name + ": " + miles + "mi</h10><br/>";
+          }
+          leaderboard_html += "<br/>"
+        }
+        $('#leaderboard').html(leaderboard_html);
+        $('#username-area').html("");
+        window.posted_to_leaderboard = true;
+      }
+    });
   }
-      
+
 
   // Show/hide the sidebar
   $('#toggle-divvybrags').click(function() {
-    if (window.showing_sidebar === true) { 
+    if (window.showing_sidebar === true) {
       $('#divvybrags').animate({ height: "35px", width: "35px" });
       $(this).html("&#8601;");
       window.showing_sidebar = false;
@@ -588,5 +582,15 @@ $(function() {
       window.showing_sidebar = true;
     }
   });
+
+	function downloadCSV() {
+		var csvContent = "data:text/csv;charset=utf-8,";
+		csvContent += "Trip ID,Start Station,Start Date,End Station,End Date,Duration,Approximate Mileage\n"
+		window.my_divvy_data.forEach(function(trip) {
+			csvContent += (trip["trip_id"] + "," + trip["start_station"] + "," + trip["start_date"] + "," + trip["end_station"] + "," + trip["end_date"] + "," + trip["duration"] + "," + trip["milage"] +"\n" );
+		});
+		var encodedUri = encodeURI(csvContent);
+		window.open(encodedUri);
+	};
 
 });
