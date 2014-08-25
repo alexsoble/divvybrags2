@@ -551,7 +551,6 @@ $(function() {
     var total_milage = window.total_milage;
     var update_flag = checkName(getUserName());
 		var user_name = getUserName();
-		console.log('check flags: ' +user_name + " " + update_flag)
     $.ajax({
       type: "POST",
       url: "http://divvybrags-leaderboard.herokuapp.com/new_entry",
