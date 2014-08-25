@@ -5,21 +5,21 @@
   "description": "Liberate your bikeshare data.",
   "version": "2.3.1",
 
-  "icons": { 
+  "icons": {
     "48": "icon48.png"
   },
 
   "content_scripts": [
     {
       "matches": ["https://www.divvybikes.com/account/trips","https://www.divvybikes.com/account/trips/*"],
-      "js": [ 
-        "jquery.js", 
-        "highcharts.js", 
+      "js": [
+        "jquery.js",
+        "highcharts.js",
         "jquery.livequery.js",
         "background.js"
       ],
       "css": ["background.css"]
-    } 
+    }
   ],
 
   "web_accessible_resources": [
@@ -35,7 +35,7 @@
     "api_key.json"
   ],
 
-  "permissions": [ 
+  "permissions": [
     "http://divvybrags-leaderboard.herokuapp.com/",
     "https://maps.googleapis.com/maps/api/distancematrix/json",
     "storage"
