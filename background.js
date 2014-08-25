@@ -527,7 +527,8 @@ $(function() {
 		if (month_leaderboard_text.indexOf(user_name)!= -1){
 			if (confirm('This username has already been added to the leaderboard this month. \n If you want to change this username, click "OK". \n If this is your username and you want to update your mileage, click "Cancel"')) {
 				var new_name = prompt("Please enter a new username", "");
-				checkName(new_name);
+				$('#username-input').val(new_name);
+				return checkName(new_name);
 			} else {
 				return true;
 			}
@@ -548,9 +549,9 @@ $(function() {
 
   function postIt() {
     var total_milage = window.total_milage;
-    var user_name = getUserName();
-    var update_flag = checkName(user_name);
-
+    var update_flag = checkName(getUserName());
+		var user_name = getUserName();
+		console.log('check flags: ' +user_name + " " + update_flag)
     $.ajax({
       type: "POST",
       url: "http://divvybrags-leaderboard.herokuapp.com/new_entry",
