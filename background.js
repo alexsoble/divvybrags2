@@ -525,7 +525,12 @@ $(function() {
       }
     }
 		if (month_leaderboard_text.indexOf(user_name)!= -1){
-		 	return true;
+			if (confirm('This username has already been added to the leaderboard this month. \n If you want to change this username, click "OK". \n If this is your username and you want to update your mileage, click "Cancel"')) {
+				var new_name = prompt("Please enter a new username", "");
+				checkName(new_name);
+			} else {
+				return true;
+			}
 		}
      else {
 			return false;
