@@ -524,26 +524,27 @@ $(function() {
         }
       }
     }
-    //Search leaderboard text for name
-		console.log('this is leaderboard: ' + month_leaderboard_text)
-    if (month_leaderboard_text.indexOf(user_name)!= -1){
-      console.log ('found the name!!');
-			return true;
-    } else {
-			console.log ('this is a new name for this month!');
+		if (month_leaderboard_text.indexOf(user_name)!= -1){
+		 	return true;
+		}
+     else {
 			return false;
 		}
   }
 
+	function getUserName(){
+		if (window.username === null || window.username == undefined) {
+			var user_name = $('#username-input').val();
+		} else {
+			var user_name = window.username;
+		}
+		return user_name
+	}
+
   function postIt() {
     var total_milage = window.total_milage;
-    if (window.username === null || window.username == undefined) {
-      var user_name = $('#username-input').val();
-    } else {
-      var user_name = window.username;
-    }
+    var user_name = getUserName();
     var update_flag = checkName(user_name);
-		console.log ("The test!: " + update_flag)
 
     $.ajax({
       type: "POST",
