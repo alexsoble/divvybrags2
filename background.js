@@ -557,7 +557,7 @@ $(function() {
       data: { leaderboard_post: { flag: update_flag, name: user_name, miles: total_milage, city: "Chicago", month: window.this_month, year: window.this_year  } },
       success: function(data) {
         leaderboard_html = "";
-        var leaderboard = data["leaderboard"];
+        var leaderboard = data;
         for (var i = 0; i <=leaderboard.length -1; i++){
           var month = leaderboard[i];
           var month_name = Object.keys(month);
